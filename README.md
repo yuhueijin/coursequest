@@ -4,9 +4,14 @@
 
 🎮 **線上直接玩：https://yuhueijin.github.io/coursequest/**
 
-- **課程** = 大魔王關卡
+- **課程** = 一個大主題，底下分好幾個 **Stage（章節）**
 - **小怪** = 學習小節（先教一段觀念，再用問答當攻擊）
-- **大魔王戰** = 綜合測驗，答對造成傷害、答錯被反擊
+- **小魔王** = 每個 Stage 結尾的綜合考驗，統整該章節教過的所有觀念
+- **大魔王** = 全課程過關後的最終試煉，綜合所有 Stage
+- **升級與技能** = 答對題目累積經驗值，升級解鎖技能，可裝備一個技能為戰鬥加成傷害
+
+目前內建課程「機關性騷擾防治研習」，內容改編自行政院性別平等處
+《各機關性騷擾防治通用教材》，涵蓋性騷擾防治三法與跟蹤騷擾防制法。
 
 ## 技術棧
 
@@ -43,16 +48,20 @@ npm run start                     # 用 serve 在本機預覽 out/ 的結果
 ```
 app/                  Next.js 路由（layout、page、全域樣式）
 components/
-  Game.tsx            遊戲引擎：畫面狀態機、戰鬥邏輯、存檔
+  Game.tsx            遊戲引擎：畫面狀態機、戰鬥邏輯、存檔、升級判定
   HpBar.tsx            血條元件
+  PlayerStatusCard.tsx 玩家等級／經驗值／技能裝備卡
   screens/            各畫面（開始、選課程、教學、Boss 介紹、戰鬥、結算、通關）
 lib/
-  types.ts            課程資料型別
-  courses.ts          課程內容資料（★ 加新課程只改這個檔案）
+  types.ts            課程／Stage／技能／存檔的型別定義
+  courses.ts          課程內容資料（★ 加新課程只改這個檔案）＋關卡推進邏輯
+  skills.ts           升級門檻與技能資料
   progress.ts         localStorage 存讀檔工具
 vanilla-prototype/    最初的純 HTML/CSS/JS 原型（保留參考，未串接）
 ```
 
 ## 加新課程
 
-只要在 `lib/courses.ts` 的 `COURSES` 陣列新增一個物件即可，型別見 `lib/types.ts`，不用碰 `components/` 底下的任何程式碼。
+只要在 `lib/courses.ts` 的 `COURSES` 陣列新增一個物件即可（一個 Course 底下有多個
+`Stage`，每個 Stage 有 `mobs[]` + `miniBoss`，課程結尾再加一個 `finalBoss`），
+型別見 `lib/types.ts`，不用碰 `components/` 底下的任何程式碼。

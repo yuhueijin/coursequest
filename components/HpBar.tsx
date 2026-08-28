@@ -1,7 +1,7 @@
 interface HpBarProps {
   cur: number;
   max: number;
-  colorClass: "hp-player" | "hp-mob" | "hp-boss";
+  colorClass: "hp-player" | "hp-mob" | "hp-miniboss" | "hp-boss";
 }
 
 export default function HpBar({ cur, max, colorClass }: HpBarProps) {

@@ -13,7 +13,10 @@
   --warn: #facc15;
   --hp-player: #4ade80;
   --hp-mob: #facc15;
+  --hp-miniboss: #fb923c;
   --hp-boss: #ff5d5d;
+  --miniboss: #fb923c;
+  --miniboss-dark: #c2660f;
 }
 
 * {
@@ -107,6 +110,10 @@ h2 {
   background: linear-gradient(135deg, var(--danger), var(--danger-dark));
 }
 
+.btn-warn {
+  background: linear-gradient(135deg, var(--miniboss), var(--miniboss-dark));
+}
+
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--border);
@@ -180,6 +187,16 @@ h2 {
   border-color: var(--danger);
 }
 
+.lesson-card.miniboss-intro {
+  border-color: var(--miniboss);
+}
+
+.combatant .equipped-skill {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
 .lesson-content {
   color: var(--text-dim);
   line-height: 1.8;
@@ -239,6 +256,10 @@ h2 {
 
 .hp-mob {
   background: var(--hp-mob);
+}
+
+.hp-miniboss {
+  background: var(--hp-miniboss);
 }
 
 .hp-boss {
@@ -319,6 +340,92 @@ h2 {
 
 .result-card.lose {
   border-color: var(--danger);
+}
+
+/* -------- 玩家狀態卡（等級／經驗值／技能）-------- */
+.player-status {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.player-status-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.player-level {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+
+.player-xp-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.xp-bar {
+  position: relative;
+  background: #0f1626;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  transition: width 0.4s ease;
+}
+
+.skill-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.skill-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-chip {
+  border: 1px solid var(--border);
+  background: var(--bg-card-2);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.skill-chip:hover {
+  border-color: var(--accent);
+}
+
+.skill-chip.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.skill-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.6;
 }
 
 @media (max-width: 480px) {
