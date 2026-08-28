@@ -45,9 +45,10 @@ export interface StageCard {
   icon: string;
   /**
    * 卡面下方的說明。因為一張卡在終極挑戰裡固定對應一題（見
-   * FinalBossQuestion.correctStageId），這裡要直接寫出那一題的答案本身，
-   * 而不是籠統的分類說明；答案內容要跟題目一一對應，讓玩家一眼就能
-   * 分辨該選哪一張卡，不用用猜的。
+   * FinalBossQuestion.correctStageId），這裡直接寫那一題的答案本身就好，
+   * 不用加「這題的答案：」之類的前綴，也不用加「遇到...就選這張」之類
+   * 提示何時出牌的句子；不是籠統的分類說明，答案內容要跟題目一一對應，
+   * 讓玩家一眼就能分辨該選哪一張卡，不用用猜的。
    */
   description: string;
 }
