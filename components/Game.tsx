@@ -71,7 +71,7 @@ export default function Game() {
 
   const [courseId, setCourseId] = useState<string | null>(null);
 
-  // 小怪／小魔王的一般戰鬥狀態（血量已經改成全域持續資源，不放在這裡了）
+  // 訓練／關卡挑戰的一般戰鬥狀態（血量已經改成全域持續資源，不放在這裡了）
   const [encounter, setEncounter] = useState<EncounterRef | null>(null);
   const [enemy, setEnemy] = useState({ hp: 0, maxHp: 0 });
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -80,7 +80,7 @@ export default function Game() {
   const [lastExplain, setLastExplain] = useState("");
   const [encounterOutcome, setEncounterOutcome] = useState<"win" | "lose" | null>(null);
 
-  // 大魔王卡牌戰狀態：魔王依序出題，玩家從手牌（尚未用掉的招式卡）選一張回答
+  // 終極挑戰卡牌戰狀態：依序出題，玩家從手牌（尚未用掉的卡片）選一張回答
   const [cardQuestionIndex, setCardQuestionIndex] = useState(0);
   const [playedStageIds, setPlayedStageIds] = useState<string[]>([]);
   const [cardBossOutcome, setCardBossOutcome] = useState<"win" | "lose" | null>(null);
@@ -213,7 +213,7 @@ export default function Game() {
       setCoursesProgress({ ...safeProgress, [courseId]: newCp });
       enterStageEncounter(findNextEncounterInStage(stage, newSp) ?? { kind: "miniboss" as const, stageId: stage.id, data: stage.miniBoss });
     } else {
-      // 小魔王：完成這個關卡，拿到卡片，可能因此升級，升級的話血量上限
+      // 完成挑戰：完成這個關卡，拿到卡片，可能因此升級，升級的話血量上限
       // 跟著提高，多出來的上限直接加到目前血量；接著直接回到關卡選擇畫面，
       // 不會連續逼玩家馬上打下一關。
       const newSp = { ...sp, miniBossCleared: true };
@@ -256,10 +256,10 @@ export default function Game() {
     setScreen("stageSelect");
   }
 
-  // ---------------- 大魔王卡牌戰 ----------------
+  // ---------------- 終極挑戰卡牌戰 ----------------
 
   function challengeBoss() {
-    if (!courseId || isDead) return; // 血量歸零不能挑戰大魔王
+    if (!courseId || isDead) return; // 血量歸零不能開始終極挑戰
     const course = findCourse(courseId);
     if (!course) return;
     const cp = getCourseProgress(safeProgress, courseId);
@@ -295,7 +295,7 @@ export default function Game() {
     } else {
       setHp(hp - WRONG_ANSWER_DAMAGE);
       setLastResult("wrong");
-      setLastLog(`❌ 選錯卡了！魔王反擊，你受到 ${WRONG_ANSWER_DAMAGE} 點傷害。`);
+      setLastLog(`❌ 選錯卡了！敵人反擊，你受到 ${WRONG_ANSWER_DAMAGE} 點傷害。`);
     }
     setLastExplain(q.explain);
     setPlayedStageIds((prev) => [...prev, stageId]);
@@ -354,7 +354,7 @@ export default function Game() {
     setScreen("cardBossIntro");
   }
 
-  // 闖關中（教學／小魔王介紹／戰鬥／結算）共用的整體進度條，
+  // 闖關中（教學／挑戰介紹／戰鬥／結算）共用的整體進度條，
   // 顯示的是「這個 Stage 自己」的進度，不會跟其他 Stage 混在一起。
   function renderAdventureProgress() {
     if (!courseId || !encounter) return null;

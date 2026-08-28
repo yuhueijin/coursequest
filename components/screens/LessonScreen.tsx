@@ -12,7 +12,7 @@ export default function LessonScreen({ mob, onBeginBattle, onGoHome }: LessonScr
     <div className="screen center">
       <HomeButton onClick={onGoHome} />
       <div className="lesson-card">
-        <p className="eyebrow">遭遇小怪：{mob.name}</p>
+        <p className="eyebrow">訓練項目：{mob.name}</p>
         <h2>{mob.lesson.title}</h2>
         <p className="lesson-content">{mob.lesson.content}</p>
         <button className="btn btn-primary" onClick={onBeginBattle}>

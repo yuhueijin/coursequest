@@ -10,7 +10,7 @@ interface CardBossScreenProps {
   currentQuestion: FinalBossQuestion;
   questionNumber: number;
   totalQuestions: number;
-  /** 答對幾題就能提前打死魔王；等於 totalQuestions 代表要全對 */
+  /** 答對幾題就能提前過關；等於 totalQuestions 代表要全對 */
   requiredCorrect: number;
   remainingStageIds: string[];
   lastResult: "correct" | "wrong" | null;
@@ -41,8 +41,8 @@ export default function CardBossScreen({
   const remainingStages = stages.filter((s) => remainingStageIds.includes(s.id));
   const winConditionText =
     requiredCorrect >= totalQuestions
-      ? `⚠️ 這隻魔王要全部 ${totalQuestions} 題都答對才會被打倒`
-      : `💡 只要答對其中 ${requiredCorrect}/${totalQuestions} 題就能提前打倒魔王`;
+      ? `⚠️ 這場挑戰要全部 ${totalQuestions} 題都答對才能過關`
+      : `💡 只要答對其中 ${requiredCorrect}/${totalQuestions} 題就能提前過關`;
 
   return (
     <div className="screen">
@@ -54,7 +54,7 @@ export default function CardBossScreen({
         </div>
         <div className="vs">VS</div>
         <div className="combatant">
-          <p className="name">👹 {bossName}</p>
+          <p className="name">🏆 {bossName}</p>
           <HpBar cur={enemy.hp} max={enemy.maxHp} colorClass="hp-boss" />
         </div>
       </div>
@@ -63,7 +63,7 @@ export default function CardBossScreen({
 
       <div className="question-card">
         <p className="eyebrow">
-          魔王出題　第 {questionNumber} / {totalQuestions} 題
+          出題　第 {questionNumber} / {totalQuestions} 題
         </p>
         <h3>{currentQuestion.q}</h3>
       </div>

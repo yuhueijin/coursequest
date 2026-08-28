@@ -36,7 +36,7 @@ export default function StageSelectScreen({
       <HomeButton onClick={onGoHome} />
 
       <h2>{course.title}</h2>
-      <p className="subtitle">等級足夠的關卡可以任意順序挑戰，全部拿到卡片後就能挑戰大魔王！</p>
+      <p className="subtitle">等級足夠的關卡可以任意順序挑戰，全部拿到卡片後就能開始終極挑戰！</p>
 
       <div className="player-hp-card">
         <div className="player-hp-card-header">
@@ -50,7 +50,7 @@ export default function StageSelectScreen({
 
       {isDead && (
         <div className="hp-locked-banner">
-          💤 血量歸零了，暫時無法挑戰任何關卡或大魔王，先到下面的休息處回滿血再出發！
+          💤 血量歸零了，暫時無法挑戰任何關卡或終極挑戰，先到下面的休息處回滿血再出發！
         </div>
       )}
 
@@ -80,7 +80,7 @@ export default function StageSelectScreen({
                       ? `🔒 需要 Lv.${stage.requiredLevel}`
                       : cleared
                         ? "✅ 已完成，可重新挑戰"
-                        : `小怪 ${sp.mobsCleared.length}/${stage.mobs.length}`}
+                        : `訓練 ${sp.mobsCleared.length}/${stage.mobs.length}`}
                 </span>
               </span>
             </button>
@@ -101,7 +101,7 @@ export default function StageSelectScreen({
         onClick={fullyCleared ? onChallengeBoss : undefined}
         disabled={!fullyCleared}
       >
-        <span className="stage-badge">{fullyCleared ? "👹" : "🔒"}</span>
+        <span className="stage-badge">{fullyCleared ? "🏆" : "🔒"}</span>
         <span className="stage-tile-body">
           <span className="stage-tile-title">{course.finalBoss.name}</span>
           <span className="stage-tile-status">
@@ -109,8 +109,8 @@ export default function StageSelectScreen({
               ? "💤 血量歸零，暫時無法挑戰"
               : isCourseFullyCleared(course, cp)
                 ? cp.finalBossCleared
-                  ? "🏆 已擊敗，可重新挑戰"
-                  : "全部卡片已收集，挑戰大魔王！"
+                  ? "🏆 已完成，可重新挑戰"
+                  : "全部卡片已收集，開始終極挑戰！"
                 : `完成所有關卡後解鎖（${course.stages.filter((s) => getStageProgress(cp, s).miniBossCleared).length}/${course.stages.length}）`}
           </span>
         </span>

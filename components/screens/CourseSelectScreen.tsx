@@ -26,7 +26,7 @@ export default function CourseSelectScreen({ progress, onSelectCourse, onGoHome 
             ? `🔒 需先破關「${requiredCourse?.title ?? ""}」`
             : finalBossCleared
               ? "🏆 已通關｜🏅 已獲得徽章"
-              : `🃏 卡片 ${cardsEarned}/${totalCards}｜大魔王 ${cardsEarned === totalCards ? "可挑戰" : "未解鎖"}`;
+              : `🃏 卡片 ${cardsEarned}/${totalCards}｜終極挑戰 ${cardsEarned === totalCards ? "可挑戰" : "未解鎖"}`;
 
           return (
             <div key={course.id} className={`course-card ${unlocked ? "" : "locked"}`}>

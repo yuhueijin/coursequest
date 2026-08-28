@@ -17,8 +17,8 @@ interface BattleScreenProps {
 }
 
 const ENEMY_ICON: Record<EncounterKind, string> = {
-  mob: "👾",
-  miniboss: "🧌",
+  mob: "📝",
+  miniboss: "🎯",
 };
 
 const ENEMY_HP_CLASS: Record<EncounterKind, "hp-mob" | "hp-miniboss"> = {

@@ -18,25 +18,26 @@ import type { Course, CourseProgress, EncounterRef, Progress, Stage, StageProgre
  *   Course（課程，例如「機關性騷擾防治研習」）
  *     └ Stage（關卡，例如「法規基礎」；requiredLevel 決定要幾級才能挑戰，
  *             等級足夠的關卡之間可以任意順序挑戰）
- *         ├ mobs[]     小怪＝學習小節，先教一段觀念再考幾題
- *         ├ miniBoss   這個關卡的小魔王，綜合考驗本關卡所有觀念
- *         └ card       打贏小魔王、完成這個關卡後獲得的「卡片」，
+ *         ├ mobs[]     訓練＝學習小節，先教一段觀念再考幾題，不特別套上
+ *         │            「小怪」的包裝
+ *         ├ miniBoss   這個關卡的挑戰，綜合考驗本關卡所有觀念
+ *         └ card       完成挑戰、通關這個關卡後獲得的「卡片」，
  *                      icon + description（描述這張卡適合回答什麼類型的
- *                      情境，要具體到玩家看了題目就能對應選出正確的卡，
- *                      不是籠統的分類說明）；卡面直接顯示 Stage 的標題，
- *                      不需要另外幫招式取名字
- *     └ finalBoss       全部關卡都拿到卡片後才能挑戰的最終大魔王：
- *                       牠出題，玩家從手牌（收集到的卡片）選一張回答，
+ *                      情境——要直接是題目的答案，且要跟題目一一對應，
+ *                      讓玩家能清楚分辨該選哪一張，不是籠統的分類說明）；
+ *                      卡面直接顯示 Stage 的標題，不需要另外幫招式取名字
+ *     └ finalBoss       全部關卡都拿到卡片後才能進行的終極挑戰：
+ *                       它出題，玩家從手牌（收集到的卡片）選一張回答，
  *                       questions[].correctStageId 對應哪張卡才是正解；
- *                       requiredCorrect 決定要答對幾題才會被打死——可以
- *                       設成 questions.length（全對才死）或更少（部分對
- *                       就死，提早結束戰鬥）
+ *                       requiredCorrect 決定要答對幾題才會過關——可以
+ *                       設成 questions.length（全對才過關）或更少（部分對
+ *                       就過關，提早結束）
  *     └ restStopVideoId  休息處播放的 YouTube 影片，血量歸零時可以去回滿血
  *
- * 每完成一個關卡（打完所有小怪＋小魔王）就直接回到關卡選擇畫面拿卡片，
- * 不會連續逼玩家一直打下一關；「徽章」則是完成整門課程（打贏最終大魔王）
- * 才會獲得的成就，一門課程只有一枚，跟每個關卡拿到的「卡片」是分開的
- * 兩種收集品，徽章有專屬的清單畫面可以查看（見 getBadges）。
+ * 每完成一個關卡（做完所有訓練＋完成這個關卡的挑戰）就直接回到關卡選擇
+ * 畫面拿卡片，不會連續逼玩家一直打下一關；「徽章」則是完成整門課程
+ * （完成終極挑戰）才會獲得的成就，一門課程只有一枚，跟每個關卡拿到的
+ * 「卡片」是分開的兩種收集品，徽章有專屬的清單畫面可以查看（見 getBadges）。
  *
  * 角色等級（跨兩門課程共用）＝ 已取得的卡片總數 + 1，等級決定：
  *   ① 哪些關卡解鎖（isStageUnlocked）
@@ -67,7 +68,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-three-laws",
-            name: "三法迷宮怪",
+            name: "三法迷宮訓練",
             hp: 25,
             lesson: {
               title: "性騷擾防治，原來有三部法律？",
@@ -96,7 +97,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-stalking",
-            name: "跟蹤騷擾怪",
+            name: "跟蹤騷擾訓練",
             hp: 25,
             lesson: {
               title: "跟騷法是第四部法",
@@ -123,9 +124,9 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "法規判斷魔王",
+          name: "法規判斷挑戰",
           hp: 60,
-          intro: "這隻魔王最愛用各種情境考倒你，看你能不能正確判斷該用哪一部法律！",
+          intro: "這場挑戰最愛用各種情境考倒你，看你能不能正確判斷該用哪一部法律！",
           questions: [
             {
               q: "職場同事之間發生性騷擾，適用哪一部法律？",
@@ -156,8 +157,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "⚖️",
           description:
-            "問「這算不算性騷擾、可以申訴嗎」時用這張：判斷該用性平法（校園）、性工法（職場）、" +
-            "性騷法（其他場合）還是跟騷法（跟蹤騷擾），包含下班聚會、私人場合等特殊情境是否仍受法律保障。",
+            "這題的答案：可以申訴。下班後私下聚會不算職務上的強制聚會，所以不算職場性騷擾（不適用" +
+            "性工法），但仍可以依性騷擾防治法提出申訴——遇到「這算不算性騷擾、可以申訴嗎」就選這張。",
         },
       },
 
@@ -172,7 +173,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-hostile",
-            name: "敵意環境怪",
+            name: "敵意環境訓練",
             hp: 25,
             lesson: {
               title: "敵意式性騷擾",
@@ -199,7 +200,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-quid-pro-quo",
-            name: "交換條件怪",
+            name: "交換條件訓練",
             hp: 25,
             lesson: {
               title: "交換式性騷擾",
@@ -225,7 +226,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-power",
-            name: "權勢騷擾怪",
+            name: "權勢騷擾訓練",
             hp: 25,
             lesson: {
               title: "權勢性騷擾",
@@ -256,7 +257,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "態樣辨識魔王",
+          name: "態樣辨識挑戰",
           hp: 65,
           intro: "三種樣態混在一起考，你分得清楚嗎？",
           questions: [
@@ -293,8 +294,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "🎭",
           description:
-            "問「這樣的行為構成哪一種（或哪幾種）性騷擾樣態」時用這張：分辨敵意式（造成不舒服的工作環境）、" +
-            "交換式（拿升遷加薪換順從）、權勢式（利用上下屬關係），同一行為人可能同時構成多種樣態。",
+            "這題的答案：同時構成交換式性騷擾（拿升遷機會換交往）與敵意式性騷擾（對其他部屬開黃腔、" +
+            "評論身材）——同一行為人的不同行為可能同時構成多種樣態，遇到「這樣的行為構成哪一種樣態」就選這張。",
         },
       },
 
@@ -404,7 +405,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "防治措施魔王",
+          name: "防治措施挑戰",
           hp: 65,
           intro: "遇到、看到、想到性騷擾，你都知道該怎麼反應嗎？",
           questions: [
@@ -437,8 +438,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "🛡️",
           description:
-            "問「被害人／旁觀者可以怎麼做」時用這張：遇到或目睹性騷擾當下該採取的行動（表明拒絕、" +
-            "蒐證、申訴、尋求心理支持），重點是這個人接下來要做什麼，不是在問適用哪一部法律。",
+            "這題的答案：可以同時依性工法提出性騷擾申訴，也可以依跟騷法向警察機關聲請告誡書，兩種" +
+            "救濟管道可以併行使用——遇到「被害人／旁觀者可以怎麼做」就選這張。",
         },
       },
 
@@ -555,7 +556,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "雇主責任魔王",
+          name: "雇主責任挑戰",
           hp: 65,
           intro: "身為機關與雇主，這些義務你都做到了嗎？",
           questions: [
@@ -588,8 +589,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "🏢",
           description:
-            "問「雇主／機關接獲申訴後應該怎麼處理」時用這張：主詞是機關或公司本身的預防與處理義務" +
-            "（隔離安排、啟動調查、法定時限、保密進行），不是被害人或旁觀者個人的行動。",
+            "這題的答案：應調整工作安排避免雙方接觸、組成符合性別比例的申訴處理單位進行調查，並做出" +
+            "附理由的決議——遇到「雇主／機關接獲申訴後應該怎麼處理」就選這張。",
         },
       },
 
@@ -662,7 +663,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "責任與救濟魔王",
+          name: "責任與救濟挑戰",
           hp: 60,
           intro: "了解責任跟救濟管道，才能真正保護自己與同仁！",
           questions: [
@@ -695,23 +696,23 @@ export const COURSES: Course[] = [
         card: {
           icon: "⚔️",
           description:
-            "問「機關消極處理、拖延或打壓申訴人合不合法」時用這張：雇主怠於防治、縱容姑息時要負的" +
-            "行政、刑事、民事連帶賠償責任，是事後追究責任，不是事前該怎麼預防處理。",
+            "這題的答案：不合法。雇主／機關知悉性騷擾卻未採取有效糾正補救措施，甚至打壓申訴人，將" +
+            "違反法定防治義務並可能負賠償責任——遇到「機關消極處理、拖延或打壓申訴人合不合法」就選這張。",
         },
       },
     ],
 
     finalBoss: {
-      name: "包庇縱容・沉默魔王",
+      name: "包庇縱容・沉默挑戰",
       hp: 120,
       intro:
         "這是本次研習的最終試煉！你已經在五個關卡中學會了五招絕學——\n" +
         "法規判斷、態樣辨識、應對之心、雇主之責、縱容破除。\n\n" +
         "就像教材中的真實案例一樣，機關「大事化小、官官相護」的姑息\n" +
-        "文化，才是真正縱容性騷擾持續發生的最終魔王。牠會不斷拋出情境\n" +
-        "問題，你要從手上的招式卡選出對的那一張來回應，正面擊倒牠！\n\n" +
-        "⚠️ 這隻魔王特別頑固，五題必須全部答對才能徹底擊倒牠。",
-      // 五題全對才能打死：縱容文化不容許有一絲鬆懈。
+        "文化，才是真正縱容性騷擾持續發生的最終挑戰。它會不斷拋出情境\n" +
+        "問題，你要從手上的卡片選出對的那一張來回應，正面通過這場挑戰！\n\n" +
+        "⚠️ 這場挑戰特別硬，五題必須全部答對才能徹底過關。",
+      // 五題全對才能過關：縱容文化不容許有一絲鬆懈。
       requiredCorrect: 5,
       questions: [
         {
@@ -766,7 +767,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-purpose",
-            name: "修法緣由怪",
+            name: "修法緣由訓練",
             hp: 25,
             lesson: {
               title: "為什麼要訂定職場霸凌專章？",
@@ -796,7 +797,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-definition",
-            name: "定義五要件怪",
+            name: "定義五要件訓練",
             hp: 30,
             lesson: {
               title: "職場霸凌的法定定義（五要件）",
@@ -836,9 +837,9 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "定義判斷魔王",
+          name: "定義判斷挑戰",
           hp: 60,
-          intro: "五個要件、六大修法目的，這隻魔王要考你到底懂不懂什麼才算「職場霸凌」！",
+          intro: "五個要件、六大修法目的，這場挑戰要考你到底懂不懂什麼才算「職場霸凌」！",
           questions: [
             {
               q: "職場霸凌的行為人，依定義是與勞工有什麼關係？",
@@ -869,8 +870,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "🔍",
           description:
-            "問「這樣算不算職場霸凌」時用這張：判斷行為人與被霸凌者的關係、持續性、言詞行為樣態" +
-            "是否符合法定五要件，是在確認事件本身成不成立，不是在問雇主或被害人該怎麼做。",
+            "這題的答案：行為人必須是「利用職務或權勢等關係」的事業單位人員——遇到「這樣算不算" +
+            "職場霸凌、定義的構成要件是什麼」就選這張。",
         },
       },
 
@@ -885,7 +886,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-scale",
-            name: "規模門檻怪",
+            name: "規模門檻訓練",
             hp: 25,
             lesson: {
               title: "依僱用人數不同，雇主應辦事項不同",
@@ -917,7 +918,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-regulation",
-            name: "規範內容怪",
+            name: "規範內容訓練",
             hp: 25,
             lesson: {
               title: "防治措施規範要寫什麼？教育訓練誰要上？",
@@ -955,7 +956,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "雇主義務魔王",
+          name: "雇主義務挑戰",
           hp: 65,
           intro: "從10人到100人，雇主的義務一路加碼，你記得清楚各個門檻嗎？",
           questions: [
@@ -996,8 +997,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "🏢",
           description:
-            "問「雇主依公司規模應該辦理什麼」時用這張：案件發生「之前」就要做好的建置義務——" +
-            "依10人／30人／100人門檻設置申訴管道、訂防治規範、組申訴處理單位，不是案發後的處理。",
+            "這題的答案：還必須訂定完整的防治措施、申訴及懲處規範，並設置申訴處理單位負責相關" +
+            "事務——遇到「雇主依公司規模應該辦理什麼」就選這張。",
         },
       },
 
@@ -1012,7 +1013,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-immediate-response",
-            name: "知悉即應處理怪",
+            name: "知悉即應處理訓練",
             hp: 25,
             lesson: {
               title: "不論是不是正式申訴，知悉就要處理",
@@ -1045,7 +1046,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-complaint-filing",
-            name: "申訴受理怪",
+            name: "申訴受理訓練",
             hp: 25,
             lesson: {
               title: "申訴怎麼提？多久內決定受理？",
@@ -1073,7 +1074,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-investigation-timeline",
-            name: "調查時限怪",
+            name: "調查時限訓練",
             hp: 25,
             lesson: {
               title: "調查處理期限，依規模不同",
@@ -1103,7 +1104,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "申訴調查魔王",
+          name: "申訴調查挑戰",
           hp: 65,
           intro: "從知悉、受理、到調查完成，每個環節都有法定期限，你都記得住嗎？",
           questions: [
@@ -1140,8 +1141,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "⏱️",
           description:
-            "問「雇主知悉後該不該處理」或「多久內要受理、完成調查」時用這張：案發後雇主的即時反應" +
-            "與法定期限（知悉即應處理、10個工作日受理、依規模的調查期限），不是事前的建置準備。",
+            "這題的答案：不可以。「知悉」就要處理，不論是否收到正式申訴，雇主都應主動釐清事實、" +
+            "告知救濟途徑並提供必要協助——遇到「雇主知悉後該不該處理、多久內要受理或完成調查」就選這張。",
         },
       },
 
@@ -1156,7 +1157,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-severity",
-            name: "情節輕重怪",
+            name: "情節輕重訓練",
             hp: 25,
             lesson: {
               title: "調查屬實後，怎麼判斷懲處輕重？",
@@ -1186,7 +1187,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-protection",
-            name: "申訴人保護怪",
+            name: "申訴人保護訓練",
             hp: 25,
             lesson: {
               title: "申訴人保護：不得因申訴而被不利對待",
@@ -1213,7 +1214,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-appeal",
-            name: "申復程序怪",
+            name: "申復程序訓練",
             hp: 25,
             lesson: {
               title: "不服調查決定，怎麼申復？",
@@ -1241,7 +1242,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "懲處救濟魔王",
+          name: "懲處救濟挑戰",
           hp: 65,
           intro: "懲處要合理、申訴人要保護、不服決定還有救濟管道，一次通通考給你看！",
           questions: [
@@ -1274,8 +1275,8 @@ export const COURSES: Course[] = [
         card: {
           icon: "🛡️",
           description:
-            "問「雇主可不可以對申訴人不利處分」「懲處輕重怎麼判斷」或「不服決定怎麼申復」時用這張：" +
-            "重點是調查有結果之後，對申訴人的保護、對行為人的懲處，以及申復救濟程序。",
+            "這題的答案：雇主不得對申訴人為不利處分，違反者除處分無效外，還可能被主管機關處以" +
+            "1-100萬元罰鍰——遇到「雇主可不可以對申訴人不利處分、懲處輕重怎麼判斷」就選這張。",
         },
       },
 
@@ -1290,7 +1291,7 @@ export const COURSES: Course[] = [
         mobs: [
           {
             id: "mob-fine",
-            name: "罰則怪",
+            name: "罰則訓練",
             hp: 25,
             lesson: {
               title: "違反規定，雇主會被罰多少？",
@@ -1323,7 +1324,7 @@ export const COURSES: Course[] = [
           },
           {
             id: "mob-external-remedy",
-            name: "外部救濟怪",
+            name: "外部救濟訓練",
             hp: 25,
             lesson: {
               title: "最高負責人是行為人怎麼辦？調查有瑕疵怎麼救濟？",
@@ -1357,7 +1358,7 @@ export const COURSES: Course[] = [
           },
         ],
         miniBoss: {
-          name: "罰則與外部救濟魔王",
+          name: "罰則與外部救濟挑戰",
           hp: 60,
           intro: "雇主不做到位會被怎麼罰？調查真的不公怎麼辦？外部救濟機制一次考給你看！",
           questions: [
@@ -1398,23 +1399,23 @@ export const COURSES: Course[] = [
         card: {
           icon: "🏛️",
           description:
-            "問「雇主沒做到會被罰多少」或「被申訴人是最高負責人時該怎麼辦」時用這張：涉及公權力" +
-            "裁罰金額，以及內部程序走不通時逕向主管機關申訴、要求重新調查的外部救濟管道。",
+            "這題的答案：勞工可以逕向地方主管機關提起申訴，不受限於內部申訴管道——遇到「被申訴人" +
+            "是最高負責人時該怎麼提起申訴」就選這張。",
         },
       },
     ],
 
     finalBoss: {
-      name: "冷落孤立・巨獸魔王",
+      name: "冷落孤立・巨獸挑戰",
       hp: 120,
       intro:
         "這是本次研習的最終試煉！你已經在五個關卡中學會了五招絕學——\n" +
         "定義透視、雇主之責、即刻應對、保護傘、外部救濟。\n\n" +
         "「冷落」與「孤立」正是職場霸凌準則明文列舉的典型手段——把人\n" +
-        "排除在群體之外、讓人求助無門。牠會不斷拋出情境問題，你要從\n" +
-        "手上的招式卡選出對的那一張來回應，正面擊倒這隻魔王！\n\n" +
-        "💡 這隻魔王沒有那麼難纏，五題只要答對其中 4 題就能擊倒牠。",
-      // 5 題只要答對 4 題（約三分之二）就能提前打死，不用全對。
+        "排除在群體之外、讓人求助無門。它會不斷拋出情境問題，你要從\n" +
+        "手上的卡片選出對的那一張來回應，正面通過這場挑戰！\n\n" +
+        "💡 這場挑戰沒有那麼難纏，五題只要答對其中 4 題就能過關。",
+      // 5 題只要答對 4 題（約三分之二）就能提前過關，不用全對。
       requiredCorrect: 4,
       questions: [
         {
@@ -1461,9 +1462,9 @@ export function getStageProgress(cp: CourseProgress, stage: Stage): StageProgres
 }
 
 /**
- * 在「單一 Stage 內」依序找出玩家接下來該打的對象：
- * 先打完這個 Stage 所有小怪，再打這個 Stage 的小魔王。
- * Stage 已經全部過關就回傳 null（呼叫端可以決定要不要讓玩家重新挑戰小魔王複習）。
+ * 在「單一 Stage 內」依序找出玩家接下來該做的訓練：
+ * 先做完這個 Stage 所有訓練，再進行這個 Stage 的挑戰。
+ * Stage 已經全部過關就回傳 null（呼叫端可以決定要不要讓玩家重新挑戰複習）。
  */
 export function findNextEncounterInStage(stage: Stage, sp: StageProgress): EncounterRef | null {
   const nextMob = stage.mobs.find((m) => !sp.mobsCleared.includes(m.id));
@@ -1476,12 +1477,12 @@ export function findNextEncounterInStage(stage: Stage, sp: StageProgress): Encou
   return null;
 }
 
-/** 是否所有 Stage 都已經打贏小魔王——全部完成才能挑戰最終大魔王 */
+/** 是否所有 Stage 都已經完成挑戰——全部完成才能進行終極挑戰 */
 export function isCourseFullyCleared(course: Course, cp: CourseProgress): boolean {
   return course.stages.every((stage) => getStageProgress(cp, stage).miniBossCleared);
 }
 
-/** 課程選單卡片用：整個課程（跨所有關卡）的小怪／卡片（小魔王）進度彙總 */
+/** 課程選單卡片用：整個課程（跨所有關卡）的訓練／卡片（挑戰）進度彙總 */
 export function summarizeCourseProgress(course: Course, cp: CourseProgress) {
   let totalMobs = 0;
   let mobsDone = 0;
@@ -1505,10 +1506,10 @@ export function summarizeCourseProgress(course: Course, cp: CourseProgress) {
 
 /**
  * 闖關過程用：算出「這個 Stage 自己」目前是第幾關、這個 Stage 總共幾關
- * （小怪數 + 1 隻小魔王）。進度條只反映當前 Stage，不跟其他 Stage 混在一起。
+ * （訓練數 + 1 個挑戰）。進度條只反映當前 Stage，不跟其他 Stage 混在一起。
  */
 export function getStagePosition(stage: Stage, sp: StageProgress) {
-  const total = stage.mobs.length + 1; // +1 是這個 Stage 的小魔王
+  const total = stage.mobs.length + 1; // +1 是這個 Stage 的挑戰
   const completed = sp.mobsCleared.length + (sp.miniBossCleared ? 1 : 0);
   const current = Math.min(total, completed + 1);
   return { current, total };
@@ -1528,7 +1529,7 @@ export function getEncounterPosition(course: Course, cp: CourseProgress, encount
   };
 }
 
-/** 跨所有課程，玩家總共拿到幾張卡片（每個關卡的小魔王算一張） */
+/** 跨所有課程，玩家總共拿到幾張卡片（每個關卡的挑戰算一張） */
 export function getTotalCards(progress: Progress): number {
   let total = 0;
   for (const course of COURSES) {
@@ -1565,7 +1566,7 @@ export function getMaxCards(): number {
 }
 
 /**
- * 徽章：完成一整門課程（打贏最終大魔王）才會獲得，一門課程一枚，
+ * 徽章：完成一整門課程（完成終極挑戰）才會獲得，一門課程一枚，
  * 跟每個關卡拿到的「卡片」是分開的兩種收集品。回傳每門課程的徽章
  * 獲得狀態，給徽章清單畫面用。
  */

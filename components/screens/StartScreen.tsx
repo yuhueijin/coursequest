@@ -29,7 +29,7 @@ export default function StartScreen({
       <p className="subtitle">
         把課程變成關卡，把知識變成招式。
         <br />
-        打倒小怪學觀念，擊敗大魔王證明你學會了！
+        做訓練學觀念，完成終極挑戰證明你學會了！
       </p>
 
       {/*
