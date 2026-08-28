@@ -56,7 +56,7 @@ export default function EncounterResultScreen({
           🏕️ 前往休息處回血
         </button>
         <button className="btn btn-ghost" onClick={onBack}>
-          回選擇章節
+          回選擇關卡
         </button>
       </div>
     </div>

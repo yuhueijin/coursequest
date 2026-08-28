@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import {
   findCourse,
   findNextEncounterInStage,
+  getBadges,
   getEncounterPosition,
-  getMaxBadges,
+  getMaxCards,
   getMaxHpForLevel,
   getPlayerLevel,
   getStageProgress,
-  getTotalBadges,
+  getTotalCards,
   isCourseFullyCleared,
   isStageUnlocked,
 } from "@/lib/courses";
@@ -26,6 +27,7 @@ import EncounterResultScreen from "@/components/screens/EncounterResultScreen";
 import CardBossScreen from "@/components/screens/CardBossScreen";
 import RestScreen from "@/components/screens/RestScreen";
 import CourseClearScreen from "@/components/screens/CourseClearScreen";
+import BadgeListScreen from "@/components/screens/BadgeListScreen";
 import AdventureProgressBar from "@/components/AdventureProgressBar";
 
 const WRONG_ANSWER_DAMAGE = 15;
@@ -42,7 +44,8 @@ type Screen =
   | "cardBossIntro"
   | "cardBoss"
   | "cardBossResult"
-  | "courseClear";
+  | "courseClear"
+  | "badges";
 
 export default function Game() {
   const [screen, setScreen] = useState<Screen>("start");
@@ -56,7 +59,7 @@ export default function Game() {
 
   // mounted 只給「主畫面」用：伺服器端跟客戶端 hydrate 那一瞬間都是 false，
   // 兩邊渲染出來的內容一致，不會有 hydration 不一致的問題；掛載後才翻成
-  // true，改用客戶端真正讀到的 localStorage 資料顯示等級／徽章／血量。
+  // true，改用客戶端真正讀到的 localStorage 資料顯示等級／徽章／卡片／血量。
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     // 這是 Next.js/React 官方建議用來避開 SSR hydration 不一致的標準寫法
@@ -89,8 +92,11 @@ export default function Game() {
   const safeSave: SaveData = save ?? { courses: {}, player: { hp: getMaxHpForLevel(1) } };
   const safeProgress = safeSave.courses;
   const level = getPlayerLevel(safeProgress);
-  const totalBadges = getTotalBadges(safeProgress);
-  const maxBadges = getMaxBadges();
+  const totalCards = getTotalCards(safeProgress);
+  const maxCards = getMaxCards();
+  const badges = getBadges(safeProgress);
+  const earnedBadgeCount = badges.filter((b) => b.earned).length;
+  const maxBadgeCount = badges.length;
   const maxHp = getMaxHpForLevel(level);
   const hp = Math.min(safeSave.player.hp, maxHp);
   const isDead = hp <= 0;
@@ -154,7 +160,7 @@ export default function Game() {
       const dmg = Math.ceil(enemy.maxHp / encounter.data.questions.length);
       setEnemy((prev) => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
       setLastResult("correct");
-      setLastLog(`✅ 答對了！使出「${q.moveName}」，造成 ${dmg} 點傷害！`);
+      setLastLog(`✅ 答對了！造成 ${dmg} 點傷害！`);
     } else {
       setHp(hp - WRONG_ANSWER_DAMAGE);
       setLastResult("wrong");
@@ -207,8 +213,9 @@ export default function Game() {
       setCoursesProgress({ ...safeProgress, [courseId]: newCp });
       enterStageEncounter(findNextEncounterInStage(stage, newSp) ?? { kind: "miniboss" as const, stageId: stage.id, data: stage.miniBoss });
     } else {
-      // 小魔王：拿到這個章節的徽章／招式卡，可能因此升級，升級的話血量上限
-      // 跟著提高，多出來的上限直接加到目前血量，回到章節選單讓玩家自由選下一關。
+      // 小魔王：完成這個關卡，拿到卡片，可能因此升級，升級的話血量上限
+      // 跟著提高，多出來的上限直接加到目前血量；接著直接回到關卡選擇畫面，
+      // 不會連續逼玩家馬上打下一關。
       const newSp = { ...sp, miniBossCleared: true };
       const newCp = { ...cp, stages: { ...cp.stages, [stage.id]: newSp } };
       const newCourses = { ...safeProgress, [courseId]: newCp };
@@ -284,7 +291,7 @@ export default function Game() {
       const dmg = Math.ceil(enemy.maxHp / course.finalBoss.requiredCorrect);
       setEnemy((prev) => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
       setLastResult("correct");
-      setLastLog(`✅ 答對了！使出「${stage?.card.moveName ?? "招式卡"}」，造成 ${dmg} 點傷害！`);
+      setLastLog(`✅ 答對了！使出「${stage?.title ?? "卡片"}」，造成 ${dmg} 點傷害！`);
     } else {
       setHp(hp - WRONG_ANSWER_DAMAGE);
       setLastResult("wrong");
@@ -366,13 +373,19 @@ export default function Game() {
         <StartScreen
           mounted={mounted}
           level={level}
-          totalBadges={totalBadges}
-          maxBadges={maxBadges}
+          totalCards={totalCards}
+          maxCards={maxCards}
+          earnedBadgeCount={earnedBadgeCount}
+          maxBadgeCount={maxBadgeCount}
           hp={hp}
           maxHp={maxHp}
           onStart={() => setScreen("courseSelect")}
+          onViewBadges={() => setScreen("badges")}
         />
       );
+
+    case "badges":
+      return <BadgeListScreen badges={badges} onBack={() => setScreen("start")} onGoHome={goHome} />;
 
     case "courseSelect":
       return <CourseSelectScreen progress={safeProgress} onSelectCourse={selectCourse} onGoHome={goHome} />;

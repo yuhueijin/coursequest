@@ -75,7 +75,7 @@ export default function CardBossScreen({
             {remainingStages.map((stage) => (
               <button key={stage.id} className="move-card" onClick={() => onSelectCard(stage.id)}>
                 <span className="move-card-icon">{stage.card.icon}</span>
-                <span className="move-card-name">{stage.card.moveName}</span>
+                <span className="move-card-name">{stage.title}</span>
                 <span className="move-card-desc">{stage.card.description}</span>
               </button>
             ))}

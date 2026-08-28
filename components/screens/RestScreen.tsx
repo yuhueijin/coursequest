@@ -29,7 +29,7 @@ export default function RestScreen({ videoId, onFullyRested, onBack, onGoHome }:
           看完了，回血到滿！
         </button>
         <button className="btn btn-ghost" onClick={onBack}>
-          ← 回選擇章節
+          ← 回選擇關卡
         </button>
       </div>
     </div>

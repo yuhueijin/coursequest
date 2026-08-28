@@ -36,7 +36,7 @@ export default function StageSelectScreen({
       <HomeButton onClick={onGoHome} />
 
       <h2>{course.title}</h2>
-      <p className="subtitle">等級足夠的章節可以任意順序挑戰，全部拿到徽章後就能挑戰大魔王！</p>
+      <p className="subtitle">等級足夠的關卡可以任意順序挑戰，全部拿到卡片後就能挑戰大魔王！</p>
 
       <div className="player-hp-card">
         <div className="player-hp-card-header">
@@ -50,7 +50,7 @@ export default function StageSelectScreen({
 
       {isDead && (
         <div className="hp-locked-banner">
-          💤 血量歸零了，暫時無法挑戰任何章節或大魔王，先到下面的休息處回滿血再出發！
+          💤 血量歸零了，暫時無法挑戰任何關卡或大魔王，先到下面的休息處回滿血再出發！
         </div>
       )}
 
@@ -110,8 +110,8 @@ export default function StageSelectScreen({
               : isCourseFullyCleared(course, cp)
                 ? cp.finalBossCleared
                   ? "🏆 已擊敗，可重新挑戰"
-                  : "全部徽章已集滿，挑戰大魔王！"
-                : `完成所有章節後解鎖（${course.stages.filter((s) => getStageProgress(cp, s).miniBossCleared).length}/${course.stages.length}）`}
+                  : "全部卡片已收集，挑戰大魔王！"
+                : `完成所有關卡後解鎖（${course.stages.filter((s) => getStageProgress(cp, s).miniBossCleared).length}/${course.stages.length}）`}
           </span>
         </span>
       </button>

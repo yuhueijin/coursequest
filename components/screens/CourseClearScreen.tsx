@@ -18,7 +18,7 @@ export default function CourseClearScreen({
         <h2>🏆 課程通關：{courseTitle}</h2>
         <p>你已經掌握了這個單元的所有知識！</p>
         <button className="btn btn-primary" onClick={onBackToCourseSelect}>
-          回關卡選單
+          回課程選單
         </button>
       </div>
     </div>

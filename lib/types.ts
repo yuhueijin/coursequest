@@ -11,8 +11,6 @@ export interface Question {
   options: string[];
   /** 正確答案在 options 中的索引 */
   answer: number;
-  /** 答對時顯示的「招式名」 */
-  moveName: string;
   /** 不管答對答錯都會顯示的觀念說明，強化記憶 */
   explain: string;
 }
@@ -38,34 +36,38 @@ export interface Boss {
   questions: Question[];
 }
 
-/** 打贏一個 Stage 的小魔王後獲得的「招式卡」，同時也是徽章圖示 */
+/**
+ * 打贏一個關卡的小魔王、完成該關卡後獲得的卡片。卡面直接顯示所屬
+ * 關卡的標題，不需要另外幫招式取名字。
+ */
 export interface StageCard {
-  /** 卡面顯示的招式名稱 */
-  moveName: string;
-  /** 卡面圖示（emoji），同時當作章節選單的徽章圖示 */
+  /** 卡面圖示（emoji），同時當作關卡選單的完成標記 */
   icon: string;
-  /** 卡面下方的說明，提示這張卡適合回答什麼類型的情境，幫助玩家在大魔王戰選卡 */
+  /**
+   * 卡面下方的說明，提示這張卡適合回答什麼類型的情境。要精準到玩家
+   * 看了大魔王的題目就能直接對應選出這張卡，不能只是籠統的分類說明。
+   */
   description: string;
 }
 
 /** 大魔王的其中一題：他出題，玩家要從手牌中選出對應這題的招式卡作答 */
 export interface FinalBossQuestion {
   q: string;
-  /** 哪個 Stage 的招式卡才是這題的正解 */
+  /** 哪個關卡的卡片才是這題的正解 */
   correctStageId: string;
   explain: string;
 }
 
-/** 一個主題章節：先打幾隻小怪（學習小節），再打這個主題的小魔王（綜合考驗） */
+/** 一個關卡：先打幾隻小怪（學習小節），再打這個關卡的小魔王（綜合考驗） */
 export interface Stage {
   id: string;
   title: string;
   description: string;
-  /** 需要達到這個角色等級才能挑戰此章節 */
+  /** 需要達到這個角色等級才能挑戰此關卡 */
   requiredLevel: number;
   mobs: Mob[];
   miniBoss: Boss;
-  /** 通關這個 Stage 後獲得的徽章／招式卡 */
+  /** 通關這個關卡後獲得的卡片 */
   card: StageCard;
 }
 
@@ -126,7 +128,7 @@ export interface CourseProgress {
 
 export type Progress = Record<string, CourseProgress>;
 
-/** 玩家的持續性血量：跨章節、跨課程共用同一條血條，只有休息處能回滿 */
+/** 玩家的持續性血量：跨關卡、跨課程共用同一條血條，只有休息處能回滿 */
 export interface PlayerState {
   hp: number;
 }

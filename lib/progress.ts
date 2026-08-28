@@ -1,7 +1,7 @@
 import { getMaxHpForLevel } from "./courses";
 import type { Course, CourseProgress, Progress, SaveData, StageProgress } from "./types";
 
-// v4：玩家血量改成全域持續累積的資源（跨章節、跨課程共用一條血條，
+// v4：玩家血量改成全域持續累積的資源（跨關卡、跨課程共用一條血條，
 // 只有休息處能回滿），存檔格式跟 v3（沒有 player 欄位）不相容，
 // 所以換一把新的 key，舊存檔就自然作廢，不用寫遷移邏輯。
 const SAVE_KEY = "coursequest_save_v4";
