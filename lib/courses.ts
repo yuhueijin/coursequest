@@ -808,3 +808,38 @@ export function summarizeCourseProgress(course: Course, cp: CourseProgress) {
     finalBossCleared: cp.finalBossCleared,
   };
 }
+
+/**
+ * 闖關過程用：把「小怪、小魔王、大魔王」全部攤平成一條時間軸，
+ * 算出目前是第幾關、總共幾關，讓玩家隨時知道整體進度、還剩多少關。
+ */
+export function getOverallProgress(course: Course, cp: CourseProgress) {
+  let total = 0;
+  let completed = 0;
+
+  for (const stage of course.stages) {
+    const sp = getStageProgress(cp, stage);
+    total += stage.mobs.length + 1; // +1 是這個 Stage 的小魔王
+    completed += sp.mobsCleared.length + (sp.miniBossCleared ? 1 : 0);
+  }
+  total += 1; // 大魔王
+  if (cp.finalBossCleared) completed += 1;
+
+  return { completed, total };
+}
+
+/** 目前正在挑戰的關卡在整體時間軸上的第幾關（1-indexed），以及所屬 Stage 的階段序號 */
+export function getEncounterPosition(course: Course, cp: CourseProgress, encounter: EncounterRef) {
+  const { completed, total } = getOverallProgress(course, cp);
+  const current = Math.min(total, completed + 1);
+
+  if (encounter.stageId) {
+    const stageIndex = course.stages.findIndex((s) => s.id === encounter.stageId);
+    return {
+      current,
+      total,
+      stageLabel: `階段 ${stageIndex + 1}/${course.stages.length}：${course.stages[stageIndex]?.title ?? ""}`,
+    };
+  }
+  return { current, total, stageLabel: "最終試煉" };
+}

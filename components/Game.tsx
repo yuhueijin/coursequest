@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { findCourse, findNextEncounter } from "@/lib/courses";
+import { findCourse, findNextEncounter, getEncounterPosition } from "@/lib/courses";
 import { getCourseProgress, loadSave, saveSaveData } from "@/lib/progress";
 import { SKILLS, findSkill, getLevel } from "@/lib/skills";
 import type { Boss, EncounterRef, Mob, SaveData } from "@/lib/types";
@@ -13,6 +13,7 @@ import BossIntroScreen from "@/components/screens/BossIntroScreen";
 import BattleScreen from "@/components/screens/BattleScreen";
 import EncounterResultScreen from "@/components/screens/EncounterResultScreen";
 import CourseClearScreen from "@/components/screens/CourseClearScreen";
+import AdventureProgressBar from "@/components/AdventureProgressBar";
 
 const PLAYER_MAX_HP = 100;
 const WRONG_ANSWER_DAMAGE = 15;
@@ -198,6 +199,17 @@ export default function Game() {
     setScreen("courseSelect");
   }
 
+  // 闖關中（教學／Boss介紹／戰鬥／結算）共用的整體進度條，
+  // 讓玩家隨時知道現在第幾關、總共幾關、還剩幾個階段。
+  function renderAdventureProgress() {
+    if (!courseId || !encounter) return null;
+    const course = findCourse(courseId);
+    if (!course) return null;
+    const cp = getCourseProgress(safeSave, courseId);
+    const { current, total, stageLabel } = getEncounterPosition(course, cp, encounter);
+    return <AdventureProgressBar current={current} total={total} stageLabel={stageLabel} />;
+  }
+
   switch (screen) {
     case "start":
       return <StartScreen onStart={() => setScreen("courseSelect")} />;
@@ -214,46 +226,60 @@ export default function Game() {
 
     case "lesson":
       if (!encounter) return null;
-      return <LessonScreen mob={encounter.data as Mob} onBeginBattle={beginBattle} />;
+      return (
+        <>
+          {renderAdventureProgress()}
+          <LessonScreen mob={encounter.data as Mob} onBeginBattle={beginBattle} />
+        </>
+      );
 
     case "bossIntro":
       if (!encounter) return null;
       return (
-        <BossIntroScreen
-          boss={encounter.data as Boss}
-          kind={encounter.kind === "boss" ? "boss" : "miniboss"}
-          onBeginBattle={beginBattle}
-        />
+        <>
+          {renderAdventureProgress()}
+          <BossIntroScreen
+            boss={encounter.data as Boss}
+            kind={encounter.kind === "boss" ? "boss" : "miniboss"}
+            onBeginBattle={beginBattle}
+          />
+        </>
       );
 
     case "battle":
       if (!encounter) return null;
       return (
-        <BattleScreen
-          enemyData={encounter.data}
-          kind={encounter.kind}
-          questionIndex={questionIndex}
-          player={player}
-          enemy={enemy}
-          equippedSkill={findSkill(safeSave.player.equippedSkillId)}
-          lastResult={lastResult}
-          lastLog={lastLog}
-          lastExplain={lastExplain}
-          onAnswer={answerQuestion}
-          onProceed={proceedAfterAnswer}
-        />
+        <>
+          {renderAdventureProgress()}
+          <BattleScreen
+            enemyData={encounter.data}
+            kind={encounter.kind}
+            questionIndex={questionIndex}
+            player={player}
+            enemy={enemy}
+            equippedSkill={findSkill(safeSave.player.equippedSkillId)}
+            lastResult={lastResult}
+            lastLog={lastLog}
+            lastExplain={lastExplain}
+            onAnswer={answerQuestion}
+            onProceed={proceedAfterAnswer}
+          />
+        </>
       );
 
     case "encounterResult":
       if (!encounter || !encounterOutcome) return null;
       return (
-        <EncounterResultScreen
-          outcome={encounterOutcome}
-          enemyName={encounter.data.name}
-          onAfterWin={afterWin}
-          onRetry={retryEncounter}
-          onBackToCourseSelect={backToCourseSelect}
-        />
+        <>
+          {renderAdventureProgress()}
+          <EncounterResultScreen
+            outcome={encounterOutcome}
+            enemyName={encounter.data.name}
+            onAfterWin={afterWin}
+            onRetry={retryEncounter}
+            onBackToCourseSelect={backToCourseSelect}
+          />
+        </>
       );
 
     case "courseClear": {
