@@ -32,6 +32,16 @@ import AdventureProgressBar from "@/components/AdventureProgressBar";
 
 const WRONG_ANSWER_DAMAGE = 15;
 
+/** 產生 0 ～ n-1 的亂數排列，用來打亂終極挑戰的出題順序 */
+function shuffledIndices(n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 type Screen =
   | "start"
   | "courseSelect"
@@ -80,8 +90,11 @@ export default function Game() {
   const [lastExplain, setLastExplain] = useState("");
   const [encounterOutcome, setEncounterOutcome] = useState<"win" | "lose" | null>(null);
 
-  // 終極挑戰卡牌戰狀態：依序出題，玩家從手牌（尚未用掉的卡片）選一張回答
+  // 終極挑戰卡牌戰狀態：出題，玩家從手牌（尚未用掉的卡片）選一張回答。
+  // questionOrder 是每次進入終極挑戰時重新打亂的題目順序（存的是
+  // course.finalBoss.questions 的索引），讓每次挑戰的出題順序都不一樣。
   const [cardQuestionIndex, setCardQuestionIndex] = useState(0);
+  const [questionOrder, setQuestionOrder] = useState<number[]>([]);
   const [playedStageIds, setPlayedStageIds] = useState<string[]>([]);
   const [cardBossOutcome, setCardBossOutcome] = useState<"win" | "lose" | null>(null);
 
@@ -267,6 +280,7 @@ export default function Game() {
 
     setEnemy({ hp: course.finalBoss.hp, maxHp: course.finalBoss.hp });
     setCardQuestionIndex(0);
+    setQuestionOrder(shuffledIndices(course.finalBoss.questions.length));
     setPlayedStageIds([]);
     setLastResult(null);
     setLastLog("");
@@ -283,7 +297,7 @@ export default function Game() {
     if (!courseId) return;
     const course = findCourse(courseId);
     if (!course) return;
-    const q = course.finalBoss.questions[cardQuestionIndex];
+    const q = course.finalBoss.questions[questionOrder[cardQuestionIndex] ?? cardQuestionIndex];
     const stage = course.stages.find((s) => s.id === stageId);
     const correct = stageId === q.correctStageId;
 
@@ -346,6 +360,7 @@ export default function Game() {
     if (!course) return;
     setEnemy({ hp: course.finalBoss.hp, maxHp: course.finalBoss.hp });
     setCardQuestionIndex(0);
+    setQuestionOrder(shuffledIndices(course.finalBoss.questions.length));
     setPlayedStageIds([]);
     setLastResult(null);
     setLastLog("");
@@ -506,7 +521,7 @@ export default function Game() {
       const course = findCourse(courseId);
       if (!course) return null;
       const remainingStageIds = course.stages.map((s) => s.id).filter((id) => !playedStageIds.includes(id));
-      const currentQuestion = course.finalBoss.questions[cardQuestionIndex];
+      const currentQuestion = course.finalBoss.questions[questionOrder[cardQuestionIndex] ?? cardQuestionIndex];
       return (
         <CardBossScreen
           bossName={course.finalBoss.name}
