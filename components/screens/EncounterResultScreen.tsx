@@ -3,6 +3,8 @@ import HomeButton from "@/components/HomeButton";
 interface EncounterResultScreenProps {
   outcome: "win" | "lose";
   enemyName: string;
+  /** 血量是否還夠再挑戰一次；血量歸零時不能重打，只能先去休息處 */
+  canRetry: boolean;
   onAfterWin: () => void;
   onRetry: () => void;
   onGoRest: () => void;
@@ -13,6 +15,7 @@ interface EncounterResultScreenProps {
 export default function EncounterResultScreen({
   outcome,
   enemyName,
+  canRetry,
   onAfterWin,
   onRetry,
   onGoRest,
@@ -39,10 +42,16 @@ export default function EncounterResultScreen({
       <HomeButton onClick={onGoHome} />
       <div className="result-card lose">
         <h2>😅 這次沒有打贏 {enemyName}</h2>
-        <p>別灰心，複習一下剛剛的觀念，下次再來挑戰！</p>
-        <button className="btn btn-danger" onClick={onRetry}>
-          再挑戰一次
-        </button>
+        <p>
+          {canRetry
+            ? "別灰心，複習一下剛剛的觀念，下次再來挑戰！"
+            : "血量歸零了，先到休息處回滿血，再回來挑戰吧！"}
+        </p>
+        {canRetry && (
+          <button className="btn btn-danger" onClick={onRetry}>
+            再挑戰一次
+          </button>
+        )}
         <button className="btn btn-warn" onClick={onGoRest}>
           🏕️ 前往休息處回血
         </button>

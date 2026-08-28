@@ -3,10 +3,20 @@ interface StartScreenProps {
   level: number;
   totalBadges: number;
   maxBadges: number;
+  hp: number;
+  maxHp: number;
   onStart: () => void;
 }
 
-export default function StartScreen({ mounted, level, totalBadges, maxBadges, onStart }: StartScreenProps) {
+export default function StartScreen({
+  mounted,
+  level,
+  totalBadges,
+  maxBadges,
+  hp,
+  maxHp,
+  onStart,
+}: StartScreenProps) {
   return (
     <div className="screen center">
       <h1 className="title">📖 課程冒險 CourseQuest</h1>
@@ -17,7 +27,7 @@ export default function StartScreen({ mounted, level, totalBadges, maxBadges, on
       </p>
 
       {/*
-        等級／徽章來自 localStorage，只有客戶端掛載後才讀得到。
+        等級／徽章／血量來自 localStorage，只有客戶端掛載後才讀得到。
         mounted 在伺服器端渲染跟客戶端 hydrate 那一瞬間都是 false，
         兩邊輸出一致不會有 hydration 不一致的問題；掛載後才顯示真正數值。
       */}
@@ -26,6 +36,9 @@ export default function StartScreen({ mounted, level, totalBadges, maxBadges, on
           <span className="player-summary-level">Lv.{level}</span>
           <span className="player-summary-badges">
             🏅 {totalBadges}/{maxBadges} 枚徽章
+          </span>
+          <span className="player-summary-hp">
+            ❤️ {hp}/{maxHp}
           </span>
         </div>
       )}

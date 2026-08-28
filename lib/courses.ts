@@ -20,14 +20,22 @@ import type { Course, CourseProgress, EncounterRef, Progress, Stage, StageProgre
  *             等級足夠的 Stage 之間可以任意順序挑戰）
  *         ├ mobs[]     小怪＝學習小節，先教一段觀念再考幾題
  *         ├ miniBoss   這個主題的小魔王，綜合考驗本章節所有觀念
- *         └ card       打贏小魔王後獲得的「招式卡」（同時也是章節選單的徽章）
+ *         └ card       打贏小魔王後獲得的「招式卡」（同時也是章節選單的徽章），
+ *                      moveName + icon + description（描述這張卡適合回答
+ *                      什麼類型的情境，讓玩家在大魔王戰能有根據地選卡）
  *     └ finalBoss       全部 Stage 都拿到招式卡後才能挑戰的最終大魔王：
  *                       牠出題，玩家從手牌（收集到的招式卡）選一張回答，
- *                       questions[].correctStageId 對應哪張卡才是正解
+ *                       questions[].correctStageId 對應哪張卡才是正解；
+ *                       requiredCorrect 決定要答對幾題才會被打死——可以
+ *                       設成 questions.length（全對才死）或更少（部分對
+ *                       就死，提早結束戰鬥）
  *     └ restStopVideoId  休息處播放的 YouTube 影片，血量歸零時可以去回滿血
  *
- * 角色等級（跨兩門課程共用）＝ 已取得的徽章總數 + 1，等級決定哪些 Stage 解鎖，
- * 相關計算見檔尾的 getTotalBadges() / getPlayerLevel() / isStageUnlocked()。
+ * 角色等級（跨兩門課程共用）＝ 已取得的徽章總數 + 1，等級決定：
+ *   ① 哪些 Stage 解鎖（isStageUnlocked）
+ *   ② 血量上限（getMaxHpForLevel，每個等級都不一樣，等級愈高血量上限愈高）
+ * 血量是玩家全域共用、持續累積的資源，不會因為換關卡而重置，
+ * 血量歸零就不能再挑戰任何關卡，必須先到休息處回滿血。
  *
  * 之後要加新課程，只要在 COURSES 陣列裡新增一個物件即可，
  * 遊戲引擎 (components/Game.tsx) 完全不用改。
@@ -149,6 +157,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "法規判斷卡",
           icon: "⚖️",
+          description: "適合回答：判斷某個情境該用性平法、性工法、性騷法還是跟騷法。",
         },
       },
 
@@ -294,6 +303,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "態樣辨識卡",
           icon: "🎭",
+          description: "適合回答：分辨敵意式、交換式、權勢性騷擾等樣態的情境。",
         },
       },
 
@@ -446,6 +456,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "應對之心卡",
           icon: "🛡️",
+          description: "適合回答：遭遇或目睹性騷擾時，被害人、旁觀者該怎麼應對的情境。",
         },
       },
 
@@ -605,6 +616,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "雇主之責卡",
           icon: "🏢",
+          description: "適合回答：機關／雇主的事前預防、事後糾正補救義務的情境。",
         },
       },
 
@@ -718,6 +730,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "縱容破除卡",
           icon: "⚔️",
+          description: "適合回答：行為人責任、雇主連帶賠償、機關消極處理的情境。",
         },
       },
     ],
@@ -730,7 +743,10 @@ export const COURSES: Course[] = [
         "法規判斷、態樣辨識、應對之心、雇主之責、縱容破除。\n\n" +
         "就像教材中的真實案例一樣，機關「大事化小、官官相護」的姑息\n" +
         "文化，才是真正縱容性騷擾持續發生的最終魔王。牠會不斷拋出情境\n" +
-        "問題，你要從手上的招式卡選出對的那一張來回應，正面擊倒牠！",
+        "問題，你要從手上的招式卡選出對的那一張來回應，正面擊倒牠！\n\n" +
+        "⚠️ 這隻魔王特別頑固，五題必須全部答對才能徹底擊倒牠。",
+      // 五題全對才能打死：縱容文化不容許有一絲鬆懈。
+      requiredCorrect: 5,
       questions: [
         {
           q: "下班後同事私下聚餐，乙同事擁抱甲同事久久不放並送飛吻，甲同事感到不舒服，這可以申訴嗎？",
@@ -895,6 +911,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "定義透視卡",
           icon: "🔍",
+          description: "適合回答：判斷某個行為是否符合職場霸凌法定定義的情境。",
         },
       },
 
@@ -1028,6 +1045,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "雇主之責卡",
           icon: "🏢",
+          description: "適合回答：雇主依規模應辦理的申訴管道、防治規範義務。",
         },
       },
 
@@ -1180,6 +1198,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "即刻應對卡",
           icon: "⏱️",
+          description: "適合回答：申訴受理、調查期限、知悉即應處理的情境。",
         },
       },
 
@@ -1322,6 +1341,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "保護傘卡",
           icon: "🛡️",
+          description: "適合回答：懲處輕重判斷、申訴人保護、申復程序的情境。",
         },
       },
 
@@ -1452,6 +1472,7 @@ export const COURSES: Course[] = [
         card: {
           moveName: "外部救濟卡",
           icon: "🏛️",
+          description: "適合回答：罰則金額、最高負責人涉案、重新調查機制的情境。",
         },
       },
     ],
@@ -1464,7 +1485,10 @@ export const COURSES: Course[] = [
         "定義透視、雇主之責、即刻應對、保護傘、外部救濟。\n\n" +
         "「冷落」與「孤立」正是職場霸凌準則明文列舉的典型手段——把人\n" +
         "排除在群體之外、讓人求助無門。牠會不斷拋出情境問題，你要從\n" +
-        "手上的招式卡選出對的那一張來回應，正面擊倒這隻魔王！",
+        "手上的招式卡選出對的那一張來回應，正面擊倒這隻魔王！\n\n" +
+        "💡 這隻魔王沒有那麼難纏，五題只要答對其中 4 題就能擊倒牠。",
+      // 5 題只要答對 4 題（約三分之二）就能提前打死，不用全對。
+      requiredCorrect: 4,
       questions: [
         {
           q: "職場霸凌的法定定義中，行為人與被霸凌者之間必須具備什麼關係？",
@@ -1592,6 +1616,15 @@ export function getTotalBadges(progress: Progress): number {
 /** 角色等級：兩門課程共用，每拿一個徽章升一級，從 Lv.1 開始 */
 export function getPlayerLevel(progress: Progress): number {
   return getTotalBadges(progress) + 1;
+}
+
+/** 每升一級增加的血量上限；等級 1 的基礎血量 */
+const HP_BASE = 60;
+const HP_PER_LEVEL = 15;
+
+/** 依等級算出血量上限，每個等級都不一樣，等級愈高血量上限愈高 */
+export function getMaxHpForLevel(level: number): number {
+  return HP_BASE + (level - 1) * HP_PER_LEVEL;
 }
 
 /** 這個 Stage 的等級門檻是否已經達到 */

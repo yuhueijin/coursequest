@@ -44,6 +44,8 @@ export interface StageCard {
   moveName: string;
   /** 卡面圖示（emoji），同時當作章節選單的徽章圖示 */
   icon: string;
+  /** 卡面下方的說明，提示這張卡適合回答什麼類型的情境，幫助玩家在大魔王戰選卡 */
+  description: string;
 }
 
 /** 大魔王的其中一題：他出題，玩家要從手牌中選出對應這題的招式卡作答 */
@@ -76,6 +78,11 @@ export interface FinalBoss {
   hp: number;
   intro: string;
   questions: FinalBossQuestion[];
+  /**
+   * 需要答對幾題才會被打死，不一定要 questions.length（全部答對）。
+   * 例如 5 題只設 4，代表答對其中任 4 題就能提前擊倒魔王，不用全對。
+   */
+  requiredCorrect: number;
 }
 
 /** BossIntroScreen 共用的最小資料形狀，小魔王與大魔王都符合 */
@@ -118,3 +125,14 @@ export interface CourseProgress {
 }
 
 export type Progress = Record<string, CourseProgress>;
+
+/** 玩家的持續性血量：跨章節、跨課程共用同一條血條，只有休息處能回滿 */
+export interface PlayerState {
+  hp: number;
+}
+
+/** localStorage 存檔的完整內容 */
+export interface SaveData {
+  courses: Progress;
+  player: PlayerState;
+}
