@@ -1,5 +1,5 @@
 import HpBar from "@/components/HpBar";
-import type { Boss, EncounterKind, Mob, Skill } from "@/lib/types";
+import type { Boss, EncounterKind, Mob } from "@/lib/types";
 
 interface BattleScreenProps {
   enemyData: Mob | Boss;
@@ -7,7 +7,6 @@ interface BattleScreenProps {
   questionIndex: number;
   player: { hp: number; maxHp: number };
   enemy: { hp: number; maxHp: number };
-  equippedSkill: Skill | null;
   lastResult: "correct" | "wrong" | null;
   lastLog: string;
   lastExplain: string;
@@ -18,13 +17,11 @@ interface BattleScreenProps {
 const ENEMY_ICON: Record<EncounterKind, string> = {
   mob: "👾",
   miniboss: "🧌",
-  boss: "👹",
 };
 
-const ENEMY_HP_CLASS: Record<EncounterKind, "hp-mob" | "hp-miniboss" | "hp-boss"> = {
+const ENEMY_HP_CLASS: Record<EncounterKind, "hp-mob" | "hp-miniboss"> = {
   mob: "hp-mob",
   miniboss: "hp-miniboss",
-  boss: "hp-boss",
 };
 
 export default function BattleScreen({
@@ -33,7 +30,6 @@ export default function BattleScreen({
   questionIndex,
   player,
   enemy,
-  equippedSkill,
   lastResult,
   lastLog,
   lastExplain,
@@ -48,7 +44,6 @@ export default function BattleScreen({
         <div className="combatant">
           <p className="name">🧑 你</p>
           <HpBar cur={player.hp} max={player.maxHp} colorClass="hp-player" />
-          {equippedSkill && <p className="equipped-skill">🛡️ 裝備中：{equippedSkill.name}</p>}
         </div>
         <div className="vs">VS</div>
         <div className="combatant">

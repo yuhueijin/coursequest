@@ -1,45 +1,57 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { findCourse, findNextEncounter, getEncounterPosition } from "@/lib/courses";
-import { getCourseProgress, loadSave, saveSaveData } from "@/lib/progress";
-import { SKILLS, findSkill, getLevel } from "@/lib/skills";
-import type { Boss, EncounterRef, Mob, SaveData } from "@/lib/types";
+import {
+  findCourse,
+  findNextEncounterInStage,
+  getEncounterPosition,
+  getStageProgress,
+  isCourseFullyCleared,
+} from "@/lib/courses";
+import { getCourseProgress, loadProgress, saveProgress } from "@/lib/progress";
+import type { Boss, EncounterRef, Mob, Progress } from "@/lib/types";
 
 import StartScreen from "@/components/screens/StartScreen";
 import CourseSelectScreen from "@/components/screens/CourseSelectScreen";
+import StageSelectScreen from "@/components/screens/StageSelectScreen";
 import LessonScreen from "@/components/screens/LessonScreen";
 import BossIntroScreen from "@/components/screens/BossIntroScreen";
 import BattleScreen from "@/components/screens/BattleScreen";
 import EncounterResultScreen from "@/components/screens/EncounterResultScreen";
+import CardBossScreen from "@/components/screens/CardBossScreen";
 import CourseClearScreen from "@/components/screens/CourseClearScreen";
 import AdventureProgressBar from "@/components/AdventureProgressBar";
 
 const PLAYER_MAX_HP = 100;
 const WRONG_ANSWER_DAMAGE = 15;
 const HEAL_AFTER_MOB = 15;
-const XP_PER_CORRECT = 10;
 
 type Screen =
   | "start"
   | "courseSelect"
+  | "stageSelect"
   | "lesson"
   | "bossIntro"
   | "battle"
   | "encounterResult"
+  | "cardBossIntro"
+  | "cardBoss"
+  | "cardBossResult"
   | "courseClear";
 
 export default function Game() {
   const [screen, setScreen] = useState<Screen>("start");
 
-  // save 用 lazy initializer 讀取：SSR 階段 window 不存在，先給 null；
+  // progress 用 lazy initializer 讀取：SSR 階段 window 不存在，先給 null；
   // 客戶端 hydrate 時才真正讀 localStorage。這樣不用在 effect 裡呼叫
   // setState，也不會在讀檔完成前用空物件把舊存檔覆蓋掉。
-  const [save, setSave] = useState<SaveData | null>(() =>
-    typeof window === "undefined" ? null : loadSave()
+  const [progress, setProgress] = useState<Progress | null>(() =>
+    typeof window === "undefined" ? null : loadProgress()
   );
 
   const [courseId, setCourseId] = useState<string | null>(null);
+
+  // 小怪／小魔王的一般戰鬥狀態
   const [encounter, setEncounter] = useState<EncounterRef | null>(null);
   const [player, setPlayer] = useState({ hp: PLAYER_MAX_HP, maxHp: PLAYER_MAX_HP });
   const [enemy, setEnemy] = useState({ hp: 0, maxHp: 0 });
@@ -49,13 +61,19 @@ export default function Game() {
   const [lastExplain, setLastExplain] = useState("");
   const [encounterOutcome, setEncounterOutcome] = useState<"win" | "lose" | null>(null);
 
+  // 大魔王卡牌戰狀態
+  const [playedCardIds, setPlayedCardIds] = useState<string[]>([]);
+  const [cardOutcomes, setCardOutcomes] = useState<Record<string, "correct" | "wrong">>({});
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [cardBossOutcome, setCardBossOutcome] = useState<"win" | "lose" | null>(null);
+
   useEffect(() => {
-    if (save !== null) saveSaveData(save);
-  }, [save]);
+    if (progress !== null) saveProgress(progress);
+  }, [progress]);
 
-  const safeSave: SaveData = save ?? { courses: {}, player: { xp: 0, equippedSkillId: null } };
+  const safeProgress: Progress = progress ?? {};
 
-  function enterEncounter(ref: EncounterRef) {
+  function enterStageEncounter(ref: EncounterRef) {
     setEncounter(ref);
     setEnemy({ hp: ref.data.hp, maxHp: ref.data.hp });
     setQuestionIndex(0);
@@ -67,28 +85,31 @@ export default function Game() {
     if (ref.kind === "mob") {
       setScreen("lesson");
     } else {
-      // 小魔王／大魔王是本章節的綜合考驗，開打前一律回滿血，公平重新開始。
+      // 小魔王是這個章節的綜合考驗，開打前一律回滿血，公平重新開始。
       setPlayer((prev) => ({ ...prev, hp: prev.maxHp }));
       setScreen("bossIntro");
     }
   }
 
-  function startCourse(id: string) {
-    const course = findCourse(id);
-    if (!course) return;
-    const cp = getCourseProgress(safeSave, id);
-
+  function selectCourse(id: string) {
     setCourseId(id);
-    setPlayer({ hp: PLAYER_MAX_HP, maxHp: PLAYER_MAX_HP });
-    enterEncounter(findNextEncounter(course, cp));
+    setScreen("stageSelect");
+  }
+
+  function selectStage(stageId: string) {
+    if (!courseId) return;
+    const course = findCourse(courseId);
+    if (!course) return;
+    const stage = course.stages.find((s) => s.id === stageId);
+    if (!stage) return;
+    const cp = getCourseProgress(safeProgress, courseId);
+    const sp = getStageProgress(cp, stage);
+    const ref = findNextEncounterInStage(stage, sp) ?? { kind: "miniboss" as const, stageId: stage.id, data: stage.miniBoss };
+    enterStageEncounter(ref);
   }
 
   function beginBattle() {
     setScreen("battle");
-  }
-
-  function equipSkill(skillId: string | null) {
-    setSave({ ...safeSave, player: { ...safeSave.player, equippedSkillId: skillId } });
   }
 
   function answerQuestion(optionIndex: number) {
@@ -97,27 +118,10 @@ export default function Game() {
     const correct = optionIndex === q.answer;
 
     if (correct) {
-      const skill = findSkill(safeSave.player.equippedSkillId);
-      const baseDmg = Math.ceil(enemy.maxHp / encounter.data.questions.length);
-      const dmg = skill ? Math.ceil(baseDmg * (1 + skill.bonusPct / 100)) : baseDmg;
+      const dmg = Math.ceil(enemy.maxHp / encounter.data.questions.length);
       setEnemy((prev) => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
       setLastResult("correct");
-
-      const prevLevel = getLevel(safeSave.player.xp);
-      const newXp = safeSave.player.xp + XP_PER_CORRECT;
-      const newLevel = getLevel(newXp);
-      setSave({ ...safeSave, player: { ...safeSave.player, xp: newXp } });
-
-      let msg = `✅ 答對了！使出「${q.moveName}」`;
-      if (skill) msg += `＋「${skill.name}」技能加成`;
-      msg += `，造成 ${dmg} 點傷害！`;
-      if (newLevel > prevLevel) {
-        const unlockedSkill = SKILLS.find((s) => s.unlockLevel === newLevel);
-        msg += ` 🎉 升到 Lv.${newLevel}`;
-        if (unlockedSkill) msg += `，解鎖新技能「${unlockedSkill.name}」`;
-        msg += "！";
-      }
-      setLastLog(msg);
+      setLastLog(`✅ 答對了！使出「${q.moveName}」，造成 ${dmg} 點傷害！`);
     } else {
       setPlayer((prev) => ({ ...prev, hp: Math.max(0, prev.hp - WRONG_ANSWER_DAMAGE) }));
       setLastResult("wrong");
@@ -157,40 +161,41 @@ export default function Game() {
     if (!encounter || !courseId) return;
     const course = findCourse(courseId);
     if (!course) return;
-    const cp = getCourseProgress(safeSave, courseId);
+    const stage = course.stages.find((s) => s.id === encounter.stageId);
+    if (!stage) return;
+    const cp = getCourseProgress(safeProgress, courseId);
+    const sp = getStageProgress(cp, stage);
 
     if (encounter.kind === "mob") {
-      const stageId = encounter.stageId!;
-      const sp = cp.stages[stageId] ?? { mobsCleared: [], miniBossCleared: false };
       const mob = encounter.data as Mob;
       const mobsCleared = sp.mobsCleared.includes(mob.id) ? sp.mobsCleared : [...sp.mobsCleared, mob.id];
-      const newCp = { ...cp, stages: { ...cp.stages, [stageId]: { ...sp, mobsCleared } } };
-      const newSave = { ...safeSave, courses: { ...safeSave.courses, [courseId]: newCp } };
-      setSave(newSave);
+      const newSp = { ...sp, mobsCleared };
+      const newCp = { ...cp, stages: { ...cp.stages, [stage.id]: newSp } };
+      const newProgress = { ...safeProgress, [courseId]: newCp };
+      setProgress(newProgress);
 
       setPlayer((prev) => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + HEAL_AFTER_MOB) }));
-      enterEncounter(findNextEncounter(course, newCp));
-    } else if (encounter.kind === "miniboss") {
-      const stageId = encounter.stageId!;
-      const sp = cp.stages[stageId] ?? { mobsCleared: [], miniBossCleared: false };
-      const newCp = { ...cp, stages: { ...cp.stages, [stageId]: { ...sp, miniBossCleared: true } } };
-      const newSave = { ...safeSave, courses: { ...safeSave.courses, [courseId]: newCp } };
-      setSave(newSave);
-
-      enterEncounter(findNextEncounter(course, newCp));
+      const nextRef = findNextEncounterInStage(stage, newSp) ?? { kind: "miniboss" as const, stageId: stage.id, data: stage.miniBoss };
+      enterStageEncounter(nextRef);
     } else {
-      // 大魔王：整個課程通關
-      const newCp = { ...cp, finalBossCleared: true };
-      const newSave = { ...safeSave, courses: { ...safeSave.courses, [courseId]: newCp } };
-      setSave(newSave);
-      setScreen("courseClear");
+      // 小魔王：拿到這個章節的徽章／招式卡，回到章節選單，讓玩家自由選下一關。
+      const newSp = { ...sp, miniBossCleared: true };
+      const newCp = { ...cp, stages: { ...cp.stages, [stage.id]: newSp } };
+      const newProgress = { ...safeProgress, [courseId]: newCp };
+      setProgress(newProgress);
+      setScreen("stageSelect");
     }
   }
 
   function retryEncounter() {
     if (!encounter) return;
     setPlayer((prev) => ({ ...prev, hp: Math.max(prev.hp, Math.ceil(prev.maxHp * 0.5)) }));
-    enterEncounter(encounter);
+    enterStageEncounter(encounter);
+  }
+
+  function backToStageSelect() {
+    setEncounter(null);
+    setScreen("stageSelect");
   }
 
   function backToCourseSelect() {
@@ -199,13 +204,121 @@ export default function Game() {
     setScreen("courseSelect");
   }
 
-  // 闖關中（教學／Boss介紹／戰鬥／結算）共用的整體進度條，
-  // 讓玩家隨時知道現在第幾關、總共幾關、還剩幾個階段。
+  // ---------------- 大魔王卡牌戰 ----------------
+
+  function challengeBoss() {
+    if (!courseId) return;
+    const course = findCourse(courseId);
+    if (!course) return;
+    const cp = getCourseProgress(safeProgress, courseId);
+    if (!isCourseFullyCleared(course, cp)) return;
+
+    setEnemy({ hp: course.finalBoss.hp, maxHp: course.finalBoss.hp });
+    setPlayer({ hp: PLAYER_MAX_HP, maxHp: PLAYER_MAX_HP });
+    setPlayedCardIds([]);
+    setCardOutcomes({});
+    setActiveCardId(null);
+    setLastResult(null);
+    setLastLog("");
+    setLastExplain("");
+    setCardBossOutcome(null);
+    setScreen("cardBossIntro");
+  }
+
+  function beginCardBoss() {
+    setScreen("cardBoss");
+  }
+
+  function playCard(stageId: string) {
+    setActiveCardId(stageId);
+    setLastResult(null);
+    setLastLog("");
+    setLastExplain("");
+  }
+
+  function answerCardQuestion(optionIndex: number) {
+    if (!activeCardId || !courseId) return;
+    const course = findCourse(courseId);
+    if (!course) return;
+    const stage = course.stages.find((s) => s.id === activeCardId);
+    if (!stage) return;
+    const q = stage.card.question;
+    const correct = optionIndex === q.answer;
+
+    if (correct) {
+      const dmg = Math.ceil(enemy.maxHp / course.stages.length);
+      setEnemy((prev) => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
+      setLastResult("correct");
+      setLastLog(`✅ 答對了！使出「${q.moveName}」，造成 ${dmg} 點傷害！`);
+      setCardOutcomes((prev) => ({ ...prev, [activeCardId]: "correct" }));
+    } else {
+      setPlayer((prev) => ({ ...prev, hp: Math.max(0, prev.hp - WRONG_ANSWER_DAMAGE) }));
+      setLastResult("wrong");
+      setLastLog(`❌ 答錯了！敵人反擊，你受到 ${WRONG_ANSWER_DAMAGE} 點傷害。`);
+      setCardOutcomes((prev) => ({ ...prev, [activeCardId]: "wrong" }));
+    }
+    setLastExplain(q.explain);
+    setPlayedCardIds((prev) => [...prev, activeCardId]);
+  }
+
+  function proceedAfterCardAnswer() {
+    if (!courseId) return;
+    const course = findCourse(courseId);
+    if (!course) return;
+
+    if (player.hp <= 0) {
+      setCardBossOutcome("lose");
+      setScreen("cardBossResult");
+      return;
+    }
+    if (enemy.hp <= 0) {
+      setCardBossOutcome("win");
+      setScreen("cardBossResult");
+      return;
+    }
+    if (playedCardIds.length >= course.stages.length) {
+      // 保險：卡牌出完但雙方都還活著時，依剩餘血量判定
+      setCardBossOutcome(enemy.hp <= 0 ? "win" : "lose");
+      setScreen("cardBossResult");
+      return;
+    }
+
+    setActiveCardId(null);
+    setLastResult(null);
+    setScreen("cardBoss");
+  }
+
+  function afterCardBossWin() {
+    if (!courseId) return;
+    const cp = getCourseProgress(safeProgress, courseId);
+    const newCp = { ...cp, finalBossCleared: true };
+    setProgress({ ...safeProgress, [courseId]: newCp });
+    setScreen("courseClear");
+  }
+
+  function retryCardBoss() {
+    if (!courseId) return;
+    const course = findCourse(courseId);
+    if (!course) return;
+    setPlayer((prev) => ({ ...prev, hp: Math.max(prev.hp, Math.ceil(prev.maxHp * 0.5)) }));
+    setEnemy({ hp: course.finalBoss.hp, maxHp: course.finalBoss.hp });
+    setPlayedCardIds([]);
+    setCardOutcomes({});
+    setActiveCardId(null);
+    setLastResult(null);
+    setLastLog("");
+    setLastExplain("");
+    setCardBossOutcome(null);
+    setScreen("cardBossIntro");
+  }
+
+  // 闖關中（教學／小魔王介紹／戰鬥／結算）共用的整體進度條，
+  // 讓玩家隨時知道現在第幾關、總共幾關、還剩幾個章節。
   function renderAdventureProgress() {
     if (!courseId || !encounter) return null;
     const course = findCourse(courseId);
     if (!course) return null;
-    const cp = getCourseProgress(safeSave, courseId);
+    const cp = getCourseProgress(safeProgress, courseId);
     const { current, total, stageLabel } = getEncounterPosition(course, cp, encounter);
     return <AdventureProgressBar current={current} total={total} stageLabel={stageLabel} />;
   }
@@ -217,12 +330,27 @@ export default function Game() {
     case "courseSelect":
       return (
         <CourseSelectScreen
-          save={safeSave}
-          onStartCourse={startCourse}
-          onEquipSkill={equipSkill}
+          progress={safeProgress}
+          onSelectCourse={selectCourse}
           onBack={() => setScreen("start")}
         />
       );
+
+    case "stageSelect": {
+      if (!courseId) return null;
+      const course = findCourse(courseId);
+      if (!course) return null;
+      const cp = getCourseProgress(safeProgress, courseId);
+      return (
+        <StageSelectScreen
+          course={course}
+          cp={cp}
+          onSelectStage={selectStage}
+          onChallengeBoss={challengeBoss}
+          onBack={backToCourseSelect}
+        />
+      );
+    }
 
     case "lesson":
       if (!encounter) return null;
@@ -238,11 +366,7 @@ export default function Game() {
       return (
         <>
           {renderAdventureProgress()}
-          <BossIntroScreen
-            boss={encounter.data as Boss}
-            kind={encounter.kind === "boss" ? "boss" : "miniboss"}
-            onBeginBattle={beginBattle}
-          />
+          <BossIntroScreen boss={encounter.data as Boss} variant="miniboss" onBeginBattle={beginBattle} />
         </>
       );
 
@@ -257,7 +381,6 @@ export default function Game() {
             questionIndex={questionIndex}
             player={player}
             enemy={enemy}
-            equippedSkill={findSkill(safeSave.player.equippedSkillId)}
             lastResult={lastResult}
             lastLog={lastLog}
             lastExplain={lastExplain}
@@ -277,10 +400,55 @@ export default function Game() {
             enemyName={encounter.data.name}
             onAfterWin={afterWin}
             onRetry={retryEncounter}
-            onBackToCourseSelect={backToCourseSelect}
+            onBack={backToStageSelect}
           />
         </>
       );
+
+    case "cardBossIntro": {
+      if (!courseId) return null;
+      const course = findCourse(courseId);
+      if (!course) return null;
+      return <BossIntroScreen boss={course.finalBoss} variant="finalboss" onBeginBattle={beginCardBoss} />;
+    }
+
+    case "cardBoss": {
+      if (!courseId) return null;
+      const course = findCourse(courseId);
+      if (!course) return null;
+      return (
+        <CardBossScreen
+          bossName={course.finalBoss.name}
+          stages={course.stages}
+          player={player}
+          enemy={enemy}
+          playedStageIds={playedCardIds}
+          cardOutcomes={cardOutcomes}
+          activeStageId={activeCardId}
+          lastResult={lastResult}
+          lastLog={lastLog}
+          lastExplain={lastExplain}
+          onPlayCard={playCard}
+          onAnswer={answerCardQuestion}
+          onProceed={proceedAfterCardAnswer}
+        />
+      );
+    }
+
+    case "cardBossResult": {
+      if (!courseId || !cardBossOutcome) return null;
+      const course = findCourse(courseId);
+      if (!course) return null;
+      return (
+        <EncounterResultScreen
+          outcome={cardBossOutcome}
+          enemyName={course.finalBoss.name}
+          onAfterWin={afterCardBossWin}
+          onRetry={retryCardBoss}
+          onBack={backToStageSelect}
+        />
+      );
+    }
 
     case "courseClear": {
       if (!courseId) return null;

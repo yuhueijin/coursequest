@@ -3,7 +3,7 @@ interface EncounterResultScreenProps {
   enemyName: string;
   onAfterWin: () => void;
   onRetry: () => void;
-  onBackToCourseSelect: () => void;
+  onBack: () => void;
 }
 
 export default function EncounterResultScreen({
@@ -11,7 +11,7 @@ export default function EncounterResultScreen({
   enemyName,
   onAfterWin,
   onRetry,
-  onBackToCourseSelect,
+  onBack,
 }: EncounterResultScreenProps) {
   if (outcome === "win") {
     return (
@@ -35,8 +35,8 @@ export default function EncounterResultScreen({
         <button className="btn btn-danger" onClick={onRetry}>
           再挑戰一次
         </button>
-        <button className="btn btn-ghost" onClick={onBackToCourseSelect}>
-          回關卡選單
+        <button className="btn btn-ghost" onClick={onBack}>
+          回選擇章節
         </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { Course, CourseProgress, EncounterRef, Stage } from "./types";
+import type { Course, CourseProgress, EncounterRef, Stage, StageProgress } from "./types";
 
 /**
  * ============================================================
@@ -16,10 +16,12 @@ import type { Course, CourseProgress, EncounterRef, Stage } from "./types";
  *
  * 結構：
  *   Course
- *     └ Stage（主題章節，例如「法規基礎」）
+ *     └ Stage（主題章節，例如「法規基礎」，可以任意順序挑戰）
  *         ├ mobs[]     小怪＝學習小節，先教一段觀念再考幾題
- *         └ miniBoss   這個主題的小魔王，綜合考驗本章節所有觀念
- *     └ finalBoss       打完所有 Stage 後的最終大魔王，綜合全課程
+ *         ├ miniBoss   這個主題的小魔王，綜合考驗本章節所有觀念
+ *         └ card       打贏小魔王後獲得的「招式卡」（同時也是徽章）
+ *     └ finalBoss       全部 Stage 都拿到招式卡後才能挑戰的最終大魔王，
+ *                       戰鬥時用收集到的招式卡（一張卡一題）出招
  *
  * 之後要加新課程，只要在 COURSES 陣列裡新增一個物件即可，
  * 遊戲引擎 (components/Game.tsx) 完全不用改。
@@ -136,6 +138,21 @@ export const COURSES: Course[] = [
               explain: "反覆持續、違反意願且與性或性別有關的跟蹤騷擾行為，適用跟蹤騷擾防制法，可向警察機關聲請告誡書。",
             },
           ],
+        },
+        card: {
+          moveName: "法規判斷卡",
+          icon: "⚖️",
+          question: {
+            q: "下班後同事私下聚餐，乙同事擁抱甲同事久久不放並送飛吻，甲同事感到不舒服，這可以申訴嗎？",
+            options: [
+              "可以，雖非職場性騷擾（非強制聚會），但仍可依性騷擾防治法申訴",
+              "不可以，下班後發生的事完全不算數",
+              "只能私下抗議，不能申訴",
+            ],
+            answer: 0,
+            moveName: "終極斬・場域判斷",
+            explain: "下班後私下聚會非職務上的強制聚會，不算職場性騷擾（性工法），但仍可依性騷擾防治法申訴。",
+          },
         },
       },
 
@@ -276,6 +293,21 @@ export const COURSES: Course[] = [
               explain: "交換式的核心在於「拿好處換性要求順從」；敵意式則是造成冒犯、脅迫的環境氛圍，不一定有直接的利益交換。",
             },
           ],
+        },
+        card: {
+          moveName: "態樣辨識卡",
+          icon: "🎭",
+          question: {
+            q: "主管以晉升機會要求下屬與其交往，同時又常對其他部屬開黃腔、要求評論身材，這樣的行為可能構成？",
+            options: [
+              "交換式與敵意式性騷擾可能同時成立",
+              "只能算一種樣態，不能同時成立",
+              "都不構成性騷擾",
+            ],
+            answer: 0,
+            moveName: "終極斬・態樣疊加",
+            explain: "同一行為人的不同行為，可能同時構成不同樣態的性騷擾，樣態並非互斥，應個別事實個別認定。",
+          },
         },
       },
 
@@ -423,6 +455,21 @@ export const COURSES: Course[] = [
               explain: "不確定對方感受時，寧可先不要說、不要做，是最基本的自我檢視原則。",
             },
           ],
+        },
+        card: {
+          moveName: "應對之心卡",
+          icon: "🛡️",
+          question: {
+            q: "乙同事被拒絕告白後，仍持續在上班時間送早餐送花，下班後又告白騷擾，甲同事可以怎麼做？",
+            options: [
+              "同時提出職場性騷擾申訴，並可向警察聲請跟騷法告誡書，兩者可併行",
+              "只能擇一申訴",
+              "只能忍耐，不能怎麼樣",
+            ],
+            answer: 0,
+            moveName: "終極斬・雙軌併行",
+            explain: "持續違反意願的追求行為，同時該當性工法性騷擾與跟騷法跟蹤騷擾，兩種救濟管道可以併行使用。",
+          },
         },
       },
 
@@ -578,6 +625,21 @@ export const COURSES: Course[] = [
             },
           ],
         },
+        card: {
+          moveName: "雇主之責卡",
+          icon: "🏢",
+          question: {
+            q: "32人的公司負責人接獲員工申訴遭同事性騷擾，應該怎麼處理？",
+            options: [
+              "調整工作分配空間避免再接觸、組成女性比例過半的申訴處理單位調查、附理由做出決議",
+              "直接開除被申訴人最快",
+              "叫雙方自己私下談好就結案",
+            ],
+            answer: 0,
+            moveName: "終極斬・雇主之責",
+            explain: "應調整工作安排避免雙方接觸、組成符合性別比例的申訴處理單位調查，並做出附理由的決議。",
+          },
+        },
       },
 
       // ------------------------------------------------------
@@ -686,6 +748,21 @@ export const COURSES: Course[] = [
             },
           ],
         },
+        card: {
+          moveName: "縱容破除卡",
+          icon: "⚔️",
+          question: {
+            q: "機關對性騷擾申訴大事化小、拖延成立調查小組，甚至事後對被害人施壓調職，這樣的處理方式合法嗎？",
+            options: [
+              "不合法，可能構成雇主未盡防治義務並須負賠償責任",
+              "合法，機關有裁量權可以自行決定如何處理",
+              "只要最後有懲處加害人就沒有問題",
+            ],
+            answer: 0,
+            moveName: "終極斬・破除縱容",
+            explain: "雇主／機關知悉性騷擾卻未採取有效糾正補救措施，甚至打壓申訴人，將違反法定防治義務並可能負賠償責任，這正是我們要打倒的「縱容文化」。",
+          },
+        },
       },
     ],
 
@@ -693,71 +770,11 @@ export const COURSES: Course[] = [
       name: "包庇縱容・沉默魔王",
       hp: 120,
       intro:
-        "這是本次研習的最終試煉！融合了法規判斷、樣態辨識、防治應變、\n" +
-        "雇主義務與法律責任五大領域的綜合考驗。\n\n" +
+        "這是本次研習的最終試煉！你已經在五個章節中學會了五招絕學——\n" +
+        "法規判斷、態樣辨識、應對之心、雇主之責、縱容破除。\n\n" +
         "就像教材中的真實案例一樣，機關「大事化小、官官相護」的姑息\n" +
-        "文化，才是真正縱容性騷擾持續發生的最終魔王——打倒牠，代表\n" +
-        "你已經準備好在自己的機關裡，做出正確的判斷與行動。",
-      questions: [
-        {
-          q: "下班後同事私下聚餐，乙同事擁抱甲同事久久不放並送飛吻，甲同事感到不舒服，這可以申訴嗎？",
-          options: [
-            "可以，雖非職場性騷擾（非強制聚會），但仍可依性騷擾防治法申訴",
-            "不可以，下班後發生的事完全不算數",
-            "只能私下抗議，不能申訴",
-          ],
-          answer: 0,
-          moveName: "終極斬・場域判斷",
-          explain: "下班後私下聚會非職務上的強制聚會，不算職場性騷擾（性工法），但仍可依性騷擾防治法申訴。",
-        },
-        {
-          q: "乙同事被拒絕告白後，仍持續在上班時間送早餐送花，下班後又告白騷擾，甲同事可以怎麼做？",
-          options: [
-            "同時提出職場性騷擾申訴，並可向警察聲請跟騷法告誡書，兩者可併行",
-            "只能擇一申訴",
-            "只能忍耐，不能怎麼樣",
-          ],
-          answer: 0,
-          moveName: "終極斬・雙軌併行",
-          explain: "持續違反意願的追求行為，同時該當性工法性騷擾與跟騷法跟蹤騷擾，兩種救濟管道可以併行使用。",
-        },
-        {
-          q: "32人的公司負責人接獲員工申訴遭同事性騷擾，應該怎麼處理？",
-          options: [
-            "調整工作分配空間避免再接觸、組成女性比例過半的申訴處理單位調查、附理由做出決議",
-            "直接開除被申訴人最快",
-            "叫雙方自己私下談好就結案",
-          ],
-          answer: 0,
-          moveName: "終極斬・雇主之責",
-          explain: "應調整工作安排避免雙方接觸、組成符合性別比例的申訴處理單位調查，並做出附理由的決議。",
-        },
-        {
-          q: "性騷擾申訴案件，機關應該在多久內結案？",
-          options: ["二個月內，必要時延長一個月", "一律一個月內", "沒有法定期限"],
-          answer: 0,
-          moveName: "終極斬・時限銘記",
-          explain: "自接獲申訴之翌日起二個月內結案，必要時得延長一個月並通知當事人，這是機關的法定義務。",
-        },
-        {
-          q: "機關對性騷擾申訴大事化小、拖延成立調查小組，甚至事後對被害人施壓調職，這樣的處理方式合法嗎？",
-          options: [
-            "不合法，可能構成雇主未盡防治義務並須負賠償責任",
-            "合法，機關有裁量權可以自行決定如何處理",
-            "只要最後有懲處加害人就沒有問題",
-          ],
-          answer: 0,
-          moveName: "終極斬・破除縱容",
-          explain: "雇主／機關知悉性騷擾卻未採取有效糾正補救措施，甚至打壓申訴人，將違反法定防治義務並可能負賠償責任，這正是我們要打倒的「縱容文化」。",
-        },
-        {
-          q: "教材結語揭示，防治性騷擾的三大目標是？",
-          options: ["有效、友善、可信賴", "快速、便宜、簡單", "嚴格、秘密、單一窗口"],
-          answer: 0,
-          moveName: "終極斬・究極義",
-          explain: "三大目標：強化「有效」的裁罰處置、完備「友善」被害人的權益保障、建立「可信賴」的性騷擾防治制度。",
-        },
-      ],
+        "文化，才是真正縱容性騷擾持續發生的最終魔王。把你收集到的\n" +
+        "招式卡一張一張打出來，看能不能徹底打倒牠！",
     },
   },
 
@@ -890,6 +907,17 @@ export const COURSES: Course[] = [
             },
           ],
         },
+        card: {
+          moveName: "定義透視卡",
+          icon: "🔍",
+          question: {
+            q: "職場霸凌的法定定義中，行為人與被霸凌者之間必須具備什麼關係？",
+            options: ["事業單位人員利用職務或權勢等關係", "沒有任何關係限制，任何人都算", "只有直屬主管才符合定義"],
+            answer: 0,
+            moveName: "終極斬・定義透視",
+            explain: "職場霸凌定義明文要求行為人是「利用職務或權勢等關係」的事業單位人員。",
+          },
+        },
       },
 
       // ------------------------------------------------------
@@ -1017,6 +1045,17 @@ export const COURSES: Course[] = [
               explain: "防治措施規範聚焦在霸凌防治相關事項，跟行為人的私人理財投資完全無關。",
             },
           ],
+        },
+        card: {
+          moveName: "雇主之責卡",
+          icon: "🏢",
+          question: {
+            q: "僱用勞工30人以上的雇主，除了申訴管道，還必須做什麼？",
+            options: ["訂定防治措施、申訴及懲處規範，並設申訴處理單位", "什麼都不用多做", "只要每年開一次尾牙就好"],
+            answer: 0,
+            moveName: "終極斬・雇主之責",
+            explain: "30人以上雇主應訂定完整的防治措施、申訴及懲處規範，並設置申訴處理單位負責相關事務。",
+          },
         },
       },
 
@@ -1165,6 +1204,21 @@ export const COURSES: Course[] = [
             },
           ],
         },
+        card: {
+          moveName: "即刻應對卡",
+          icon: "⏱️",
+          question: {
+            q: "雇主非因正式申訴而知悉職場霸凌情形，且勞工暫無申訴意願，雇主可以完全不處理嗎？",
+            options: [
+              "不可以，仍應訪談釐清事實並依意願提供必要協助",
+              "可以，沒有正式申訴就不用管",
+              "只要記錄下來備查即可，不用實際行動",
+            ],
+            answer: 0,
+            moveName: "終極斬・即刻應對",
+            explain: "「知悉」就要處理，不論是否收到正式申訴，雇主都應主動釐清事實、告知救濟途徑並提供必要協助。",
+          },
+        },
       },
 
       // ------------------------------------------------------
@@ -1302,6 +1356,17 @@ export const COURSES: Course[] = [
             },
           ],
         },
+        card: {
+          moveName: "保護傘卡",
+          icon: "🛡️",
+          question: {
+            q: "雇主對職場霸凌申訴人做出降調、減薪等不利處分，會有什麼後果？",
+            options: ["違法，且可能被處以1-100萬元罰鍰", "完全合法，這是雇主的管理權", "只要有正當理由就不算違法"],
+            answer: 0,
+            moveName: "終極斬・保護傘",
+            explain: "雇主不得對申訴人為不利處分，違反者除處分無效外，還可能被主管機關處以1-100萬元罰鍰。",
+          },
+        },
       },
 
       // ------------------------------------------------------
@@ -1427,6 +1492,17 @@ export const COURSES: Course[] = [
             },
           ],
         },
+        card: {
+          moveName: "外部救濟卡",
+          icon: "🏛️",
+          question: {
+            q: "被申訴人是機關（構）最高負責人時，勞工可以怎麼提起申訴？",
+            options: ["逕向直轄市或縣（市）主管機關提起申訴", "完全沒有申訴管道", "只能等最高負責人自己離職"],
+            answer: 0,
+            moveName: "終極斬・外部救濟",
+            explain: "被申訴人是最高負責人時，法律開放勞工逕向地方主管機關提起申訴，不受限於內部申訴管道，避免「自己人查自己人」的困境。",
+          },
+        },
       },
     ],
 
@@ -1434,79 +1510,11 @@ export const COURSES: Course[] = [
       name: "冷落孤立・巨獸魔王",
       hp: 120,
       intro:
-        "這是本次研習的最終試煉！融合了定義認定、雇主義務、申訴調查、\n" +
-        "懲處救濟與罰則外部救濟五大領域的綜合考驗。\n\n" +
-        "「冷落」與「孤立」正是職場霸凌準則明文列舉的典型手段——\n" +
-        "把人排除在群體之外、讓人求助無門。打倒這隻魔王，代表你已經\n" +
-        "具備在自己的職場裡，辨識、預防並正確處理職場霸凌的能力。",
-      questions: [
-        {
-          q: "職場霸凌的法定定義中，行為人與被霸凌者之間必須具備什麼關係？",
-          options: [
-            "事業單位人員利用職務或權勢等關係",
-            "沒有任何關係限制，任何人都算",
-            "只有直屬主管才符合定義",
-          ],
-          answer: 0,
-          moveName: "終極斬・定義透視",
-          explain: "職場霸凌定義明文要求行為人是「利用職務或權勢等關係」的事業單位人員。",
-        },
-        {
-          q: "僱用勞工30人以上的雇主，除了申訴管道，還必須做什麼？",
-          options: [
-            "訂定防治措施、申訴及懲處規範，並設申訴處理單位",
-            "什麼都不用多做",
-            "只要每年開一次尾牙就好",
-          ],
-          answer: 0,
-          moveName: "終極斬・雇主之責",
-          explain: "30人以上雇主應訂定完整的防治措施、申訴及懲處規範，並設置申訴處理單位負責相關事務。",
-        },
-        {
-          q: "雇主非因正式申訴而知悉職場霸凌情形，且勞工暫無申訴意願，雇主可以完全不處理嗎？",
-          options: [
-            "不可以，仍應訪談釐清事實並依意願提供必要協助",
-            "可以，沒有正式申訴就不用管",
-            "只要記錄下來備查即可，不用實際行動",
-          ],
-          answer: 0,
-          moveName: "終極斬・即刻應對",
-          explain: "「知悉」就要處理，不論是否收到正式申訴，雇主都應主動釐清事實、告知救濟途徑並提供必要協助。",
-        },
-        {
-          q: "當事人認為雇主的調查程序有重大瑕疵時，可以怎麼做？",
-          options: [
-            "向主管機關或勞動檢查機構申訴，要求雇主重新調查",
-            "只能默默接受調查結果",
-            "直接對雇主提告詐欺",
-          ],
-          answer: 0,
-          moveName: "終極斬・重新調查",
-          explain: "調查程序有重大瑕疵（如組成不合規定、未給陳述機會、應迴避未迴避等），當事人可要求雇主重新調查，雇主不得拒絕。",
-        },
-        {
-          q: "雇主對職場霸凌申訴人做出降調、減薪等不利處分，會有什麼後果？",
-          options: [
-            "違法，且可能被處以1-100萬元罰鍰",
-            "完全合法，這是雇主的管理權",
-            "只要有正當理由就不算違法",
-          ],
-          answer: 0,
-          moveName: "終極斬・保護傘",
-          explain: "雇主不得對申訴人為不利處分，違反者除處分無效外，還可能被主管機關處以1-100萬元罰鍰。",
-        },
-        {
-          q: "被申訴人是機關（構）最高負責人時，勞工可以怎麼提起申訴？",
-          options: [
-            "逕向直轄市或縣（市）主管機關提起申訴",
-            "完全沒有申訴管道",
-            "只能等最高負責人自己離職",
-          ],
-          answer: 0,
-          moveName: "終極斬・外部救濟",
-          explain: "被申訴人是最高負責人時，法律開放勞工逕向地方主管機關提起申訴，不受限於內部申訴管道，避免「自己人查自己人」的困境。",
-        },
-      ],
+        "這是本次研習的最終試煉！你已經在五個章節中學會了五招絕學——\n" +
+        "定義透視、雇主之責、即刻應對、保護傘、外部救濟。\n\n" +
+        "「冷落」與「孤立」正是職場霸凌準則明文列舉的典型手段——把人\n" +
+        "排除在群體之外、讓人求助無門。把你收集到的招式卡一張一張打\n" +
+        "出來，看能不能徹底打倒這隻魔王！",
     },
   },
 ];
@@ -1515,58 +1523,61 @@ export function findCourse(courseId: string): Course | undefined {
   return COURSES.find((c) => c.id === courseId);
 }
 
-function emptyStageProgress() {
-  return { mobsCleared: [] as string[], miniBossCleared: false };
+function emptyStageProgress(): StageProgress {
+  return { mobsCleared: [], miniBossCleared: false };
 }
 
-export function getStageProgress(cp: CourseProgress, stage: Stage) {
+export function getStageProgress(cp: CourseProgress, stage: Stage): StageProgress {
   return cp.stages[stage.id] ?? emptyStageProgress();
 }
 
 /**
- * 依目前進度，找出玩家接下來應該挑戰的對象：
- * 依序檢查每個 Stage 有沒有小怪還沒打完、小魔王有沒有打贏，
- * 全部 Stage 都過關後，最後才是課程的大魔王。
+ * 在「單一 Stage 內」依序找出玩家接下來該打的對象：
+ * 先打完這個 Stage 所有小怪，再打這個 Stage 的小魔王。
+ * Stage 已經全部過關就回傳 null（呼叫端可以決定要不要讓玩家重新挑戰小魔王複習）。
  */
-export function findNextEncounter(course: Course, cp: CourseProgress): EncounterRef {
-  for (const stage of course.stages) {
-    const sp = getStageProgress(cp, stage);
-    const nextMob = stage.mobs.find((m) => !sp.mobsCleared.includes(m.id));
-    if (nextMob) {
-      return { kind: "mob", stageId: stage.id, data: nextMob };
-    }
-    if (!sp.miniBossCleared) {
-      return { kind: "miniboss", stageId: stage.id, data: stage.miniBoss };
-    }
+export function findNextEncounterInStage(stage: Stage, sp: StageProgress): EncounterRef | null {
+  const nextMob = stage.mobs.find((m) => !sp.mobsCleared.includes(m.id));
+  if (nextMob) {
+    return { kind: "mob", stageId: stage.id, data: nextMob };
   }
-  return { kind: "boss", stageId: null, data: course.finalBoss };
+  if (!sp.miniBossCleared) {
+    return { kind: "miniboss", stageId: stage.id, data: stage.miniBoss };
+  }
+  return null;
 }
 
-/** 課程選單卡片用：整個課程（跨所有 Stage）的小怪／小魔王／大魔王進度彙總 */
+/** 是否所有 Stage 都已經打贏小魔王——全部完成才能挑戰最終大魔王 */
+export function isCourseFullyCleared(course: Course, cp: CourseProgress): boolean {
+  return course.stages.every((stage) => getStageProgress(cp, stage).miniBossCleared);
+}
+
+/** 課程選單卡片用：整個課程（跨所有 Stage）的小怪／徽章（小魔王）進度彙總 */
 export function summarizeCourseProgress(course: Course, cp: CourseProgress) {
   let totalMobs = 0;
   let mobsDone = 0;
-  let miniBossesDone = 0;
+  let badgesEarned = 0;
 
   for (const stage of course.stages) {
     const sp = getStageProgress(cp, stage);
     totalMobs += stage.mobs.length;
     mobsDone += sp.mobsCleared.length;
-    if (sp.miniBossCleared) miniBossesDone += 1;
+    if (sp.miniBossCleared) badgesEarned += 1;
   }
 
   return {
     totalMobs,
     mobsDone,
-    totalMiniBosses: course.stages.length,
-    miniBossesDone,
+    totalBadges: course.stages.length,
+    badgesEarned,
     finalBossCleared: cp.finalBossCleared,
   };
 }
 
 /**
- * 闖關過程用：把「小怪、小魔王、大魔王」全部攤平成一條時間軸，
+ * 闖關過程用：把整個課程所有 Stage 的小怪、小魔王攤平成一條時間軸，
  * 算出目前是第幾關、總共幾關，讓玩家隨時知道整體進度、還剩多少關。
+ * （最終大魔王是獨立的卡牌戰，不計入這條時間軸。）
  */
 export function getOverallProgress(course: Course, cp: CourseProgress) {
   let total = 0;
@@ -1577,8 +1588,6 @@ export function getOverallProgress(course: Course, cp: CourseProgress) {
     total += stage.mobs.length + 1; // +1 是這個 Stage 的小魔王
     completed += sp.mobsCleared.length + (sp.miniBossCleared ? 1 : 0);
   }
-  total += 1; // 大魔王
-  if (cp.finalBossCleared) completed += 1;
 
   return { completed, total };
 }
@@ -1587,14 +1596,11 @@ export function getOverallProgress(course: Course, cp: CourseProgress) {
 export function getEncounterPosition(course: Course, cp: CourseProgress, encounter: EncounterRef) {
   const { completed, total } = getOverallProgress(course, cp);
   const current = Math.min(total, completed + 1);
+  const stageIndex = course.stages.findIndex((s) => s.id === encounter.stageId);
 
-  if (encounter.stageId) {
-    const stageIndex = course.stages.findIndex((s) => s.id === encounter.stageId);
-    return {
-      current,
-      total,
-      stageLabel: `階段 ${stageIndex + 1}/${course.stages.length}：${course.stages[stageIndex]?.title ?? ""}`,
-    };
-  }
-  return { current, total, stageLabel: "最終試煉" };
+  return {
+    current,
+    total,
+    stageLabel: `階段 ${stageIndex + 1}/${course.stages.length}：${course.stages[stageIndex]?.title ?? ""}`,
+  };
 }

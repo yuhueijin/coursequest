@@ -225,12 +225,6 @@ h2 {
   border-color: var(--miniboss);
 }
 
-.combatant .equipped-skill {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--accent);
-}
-
 .lesson-content {
   color: var(--text-dim);
   line-height: 1.8;
@@ -376,90 +370,170 @@ h2 {
   border-color: var(--danger);
 }
 
-/* -------- 玩家狀態卡（等級／經驗值／技能）-------- */
-.player-status {
+/* -------- 章節選單（自由挑選小關卡）-------- */
+.stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stage-tile,
+.boss-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 14px 18px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.stage-tile:hover,
+.boss-tile.unlocked:hover {
+  border-color: var(--accent);
+  background: #212b40;
+}
+
+.stage-tile.cleared {
+  border-color: var(--success);
+}
+
+.stage-badge {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border-radius: 50%;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.stage-badge.earned {
+  opacity: 1;
+  filter: none;
+  border-color: var(--success);
+  background: #14361f;
+}
+
+.stage-tile-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
+  min-width: 0;
 }
 
-.player-status-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.player-level {
+.stage-tile-title {
   font-weight: 700;
-  font-size: 1.05rem;
+}
+
+.stage-tile-desc {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.stage-tile-status {
+  font-size: 0.8rem;
   color: var(--accent);
 }
 
-.player-xp-text {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-}
-
-.xp-bar {
-  position: relative;
-  background: #0f1626;
-  border-radius: 999px;
-  height: 10px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-
-.xp-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-  transition: width 0.4s ease;
-}
-
-.skill-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.boss-tile {
+  border-color: var(--danger);
   margin-top: 4px;
 }
 
-.skill-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.boss-tile.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border);
 }
 
-.skill-chip {
+.boss-tile.locked .stage-badge {
+  border-color: var(--border);
+}
+
+.boss-tile.unlocked .stage-badge {
+  opacity: 1;
+  filter: none;
+  border-color: var(--danger);
+  background: #3a1717;
+}
+
+/* -------- 大魔王卡牌戰 -------- */
+.card-hand {
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  background: var(--bg-card-2);
-  color: var(--text-dim);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card-hand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.move-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(160deg, var(--bg-card-2), #171f33);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 10px;
   cursor: pointer;
   font-family: inherit;
-}
-
-.skill-chip:hover {
-  border-color: var(--accent);
-}
-
-.skill-chip.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-  border-color: var(--accent);
   color: var(--text);
-  font-weight: 600;
+  transition: transform 0.1s ease, border-color 0.15s ease;
 }
 
-.skill-desc {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  line-height: 1.6;
+.move-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+
+.move-card-icon {
+  font-size: 1.8rem;
+}
+
+.move-card-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.move-card.played {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.move-card.played.correct {
+  border-color: var(--success);
+}
+
+.move-card.played.wrong {
+  border-color: var(--danger);
+}
+
+.move-card-mark {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 480px) {

@@ -1,40 +1,30 @@
 import { COURSES, findCourse, summarizeCourseProgress } from "@/lib/courses";
 import { getCourseProgress, isCourseUnlocked } from "@/lib/progress";
-import type { SaveData } from "@/lib/types";
-import PlayerStatusCard from "@/components/PlayerStatusCard";
+import type { Progress } from "@/lib/types";
 
 interface CourseSelectScreenProps {
-  save: SaveData;
-  onStartCourse: (courseId: string) => void;
-  onEquipSkill: (skillId: string | null) => void;
+  progress: Progress;
+  onSelectCourse: (courseId: string) => void;
   onBack: () => void;
 }
 
-export default function CourseSelectScreen({
-  save,
-  onStartCourse,
-  onEquipSkill,
-  onBack,
-}: CourseSelectScreenProps) {
+export default function CourseSelectScreen({ progress, onSelectCourse, onBack }: CourseSelectScreenProps) {
   return (
     <div className="screen">
       <h2>選擇課程關卡</h2>
 
-      <PlayerStatusCard player={save.player} onEquipSkill={onEquipSkill} />
-
       <div className="course-list">
         {COURSES.map((course) => {
-          const unlocked = isCourseUnlocked(save, course);
-          const cp = getCourseProgress(save, course.id);
-          const { totalMobs, mobsDone, totalMiniBosses, miniBossesDone, finalBossCleared } =
-            summarizeCourseProgress(course, cp);
+          const unlocked = isCourseUnlocked(progress, course);
+          const cp = getCourseProgress(progress, course.id);
+          const { totalBadges, badgesEarned, finalBossCleared } = summarizeCourseProgress(course, cp);
 
           const requiredCourse = course.requires ? findCourse(course.requires) : undefined;
           const statusText = !unlocked
             ? `🔒 需先破關「${requiredCourse?.title ?? ""}」`
             : finalBossCleared
-              ? "🏆 已通關"
-              : `小怪 ${mobsDone}/${totalMobs}｜小魔王 ${miniBossesDone}/${totalMiniBosses}｜大魔王 未挑戰`;
+              ? `🏆 已通關｜🏅 ${badgesEarned}/${totalBadges}`
+              : `🏅 徽章 ${badgesEarned}/${totalBadges}｜大魔王 ${badgesEarned === totalBadges ? "可挑戰" : "未解鎖"}`;
 
           return (
             <div key={course.id} className={`course-card ${unlocked ? "" : "locked"}`}>
@@ -42,11 +32,8 @@ export default function CourseSelectScreen({
               <p>{course.description}</p>
               <p className="status">{statusText}</p>
               {unlocked ? (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => onStartCourse(course.id)}
-                >
-                  {finalBossCleared ? "重新挑戰" : "進入關卡"}
+                <button className="btn btn-primary" onClick={() => onSelectCourse(course.id)}>
+                  查看章節
                 </button>
               ) : (
                 <button className="btn btn-disabled" disabled>

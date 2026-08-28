@@ -1,13 +1,13 @@
-import type { Boss } from "@/lib/types";
+import type { BossFlavor } from "@/lib/types";
 
 interface BossIntroScreenProps {
-  boss: Boss;
-  kind: "miniboss" | "boss";
+  boss: BossFlavor;
+  variant: "miniboss" | "finalboss";
   onBeginBattle: () => void;
 }
 
-export default function BossIntroScreen({ boss, kind, onBeginBattle }: BossIntroScreenProps) {
-  const isFinal = kind === "boss";
+export default function BossIntroScreen({ boss, variant, onBeginBattle }: BossIntroScreenProps) {
+  const isFinal = variant === "finalboss";
   return (
     <div className="screen center">
       <div className={`lesson-card ${isFinal ? "boss-intro" : "miniboss-intro"}`}>

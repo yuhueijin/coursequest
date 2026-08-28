@@ -30,12 +30,22 @@ export interface Mob {
   questions: Question[];
 }
 
-/** 小魔王（每個 Stage 結尾）與大魔王（整個課程結尾）共用同一種資料形狀 */
+/** 小魔王：每個 Stage 結尾的綜合考驗 */
 export interface Boss {
   name: string;
   hp: number;
   intro: string;
   questions: Question[];
+}
+
+/** 打贏一個 Stage 的小魔王後獲得的「招式卡」，用在最終大魔王的卡牌戰中 */
+export interface StageCard {
+  /** 卡面顯示的招式名稱 */
+  moveName: string;
+  /** 卡面圖示（emoji） */
+  icon: string;
+  /** 打出這張卡時要回答的題目（最終試煉等級的綜合題） */
+  question: Question;
 }
 
 /** 一個主題章節：先打幾隻小怪（學習小節），再打這個主題的小魔王（綜合考驗） */
@@ -45,6 +55,21 @@ export interface Stage {
   description: string;
   mobs: Mob[];
   miniBoss: Boss;
+  /** 通關這個 Stage 後獲得的徽章／招式卡 */
+  card: StageCard;
+}
+
+/** 最終大魔王：只有基本資料，題目來自玩家收集到的招式卡（course.stages[].card） */
+export interface FinalBoss {
+  name: string;
+  hp: number;
+  intro: string;
+}
+
+/** BossIntroScreen 共用的最小資料形狀，小魔王與大魔王都符合 */
+export interface BossFlavor {
+  name: string;
+  intro: string;
 }
 
 export interface Course {
@@ -54,17 +79,16 @@ export interface Course {
   /** 需要先破關的 courseId；null 代表一開始就解鎖 */
   requires: string | null;
   stages: Stage[];
-  /** 全課程打完所有 Stage 後的最終考驗 */
-  finalBoss: Boss;
+  /** 全部 Stage 都過關後才能挑戰的最終大魔王 */
+  finalBoss: FinalBoss;
 }
 
-export type EncounterKind = "mob" | "miniboss" | "boss";
+export type EncounterKind = "mob" | "miniboss";
 
-/** 目前正在挑戰的對象：一隻小怪、某個 Stage 的小魔王、或課程的最終大魔王 */
+/** 目前正在挑戰的對象：一隻小怪、或某個 Stage 的小魔王 */
 export interface EncounterRef {
   kind: EncounterKind;
-  /** 小魔王所屬的 Stage id；大魔王沒有對應的 Stage，為 null */
-  stageId: string | null;
+  stageId: string;
   data: Mob | Boss;
 }
 
@@ -80,22 +104,3 @@ export interface CourseProgress {
 }
 
 export type Progress = Record<string, CourseProgress>;
-
-/** 技能：解鎖後可以在戰鬥中裝備，答對時提供額外傷害加成 */
-export interface Skill {
-  id: string;
-  name: string;
-  description: string;
-  unlockLevel: number;
-  bonusPct: number;
-}
-
-export interface PlayerState {
-  xp: number;
-  equippedSkillId: string | null;
-}
-
-export interface SaveData {
-  courses: Progress;
-  player: PlayerState;
-}
