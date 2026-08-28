@@ -1,4 +1,5 @@
 import HpBar from "@/components/HpBar";
+import HomeButton from "@/components/HomeButton";
 import type { Boss, EncounterKind, Mob } from "@/lib/types";
 
 interface BattleScreenProps {
@@ -12,6 +13,7 @@ interface BattleScreenProps {
   lastExplain: string;
   onAnswer: (optionIndex: number) => void;
   onProceed: () => void;
+  onGoHome: () => void;
 }
 
 const ENEMY_ICON: Record<EncounterKind, string> = {
@@ -35,11 +37,13 @@ export default function BattleScreen({
   lastExplain,
   onAnswer,
   onProceed,
+  onGoHome,
 }: BattleScreenProps) {
   const q = enemyData.questions[questionIndex];
 
   return (
     <div className="screen">
+      <HomeButton onClick={onGoHome} />
       <div className="battle-header">
         <div className="combatant">
           <p className="name">🧑 你</p>

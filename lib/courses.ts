@@ -1,4 +1,4 @@
-import type { Course, CourseProgress, EncounterRef, Stage, StageProgress } from "./types";
+import type { Course, CourseProgress, EncounterRef, Progress, Stage, StageProgress } from "./types";
 
 /**
  * ============================================================
@@ -16,12 +16,18 @@ import type { Course, CourseProgress, EncounterRef, Stage, StageProgress } from 
  *
  * 結構：
  *   Course
- *     └ Stage（主題章節，例如「法規基礎」，可以任意順序挑戰）
+ *     └ Stage（主題章節，例如「法規基礎」；requiredLevel 決定要幾級才能挑戰，
+ *             等級足夠的 Stage 之間可以任意順序挑戰）
  *         ├ mobs[]     小怪＝學習小節，先教一段觀念再考幾題
  *         ├ miniBoss   這個主題的小魔王，綜合考驗本章節所有觀念
- *         └ card       打贏小魔王後獲得的「招式卡」（同時也是徽章）
- *     └ finalBoss       全部 Stage 都拿到招式卡後才能挑戰的最終大魔王，
- *                       戰鬥時用收集到的招式卡（一張卡一題）出招
+ *         └ card       打贏小魔王後獲得的「招式卡」（同時也是章節選單的徽章）
+ *     └ finalBoss       全部 Stage 都拿到招式卡後才能挑戰的最終大魔王：
+ *                       牠出題，玩家從手牌（收集到的招式卡）選一張回答，
+ *                       questions[].correctStageId 對應哪張卡才是正解
+ *     └ restStopVideoId  休息處播放的 YouTube 影片，血量歸零時可以去回滿血
+ *
+ * 角色等級（跨兩門課程共用）＝ 已取得的徽章總數 + 1，等級決定哪些 Stage 解鎖，
+ * 相關計算見檔尾的 getTotalBadges() / getPlayerLevel() / isStageUnlocked()。
  *
  * 之後要加新課程，只要在 COURSES 陣列裡新增一個物件即可，
  * 遊戲引擎 (components/Game.tsx) 完全不用改。
@@ -42,6 +48,7 @@ export const COURSES: Course[] = [
         id: "stage-law",
         title: "法規基礎",
         description: "認識性騷擾防治三法＋跟蹤騷擾防制法，分清楚什麼場合適用哪一部法律。",
+        requiredLevel: 1,
         mobs: [
           {
             id: "mob-three-laws",
@@ -142,17 +149,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "法規判斷卡",
           icon: "⚖️",
-          question: {
-            q: "下班後同事私下聚餐，乙同事擁抱甲同事久久不放並送飛吻，甲同事感到不舒服，這可以申訴嗎？",
-            options: [
-              "可以，雖非職場性騷擾（非強制聚會），但仍可依性騷擾防治法申訴",
-              "不可以，下班後發生的事完全不算數",
-              "只能私下抗議，不能申訴",
-            ],
-            answer: 0,
-            moveName: "終極斬・場域判斷",
-            explain: "下班後私下聚會非職務上的強制聚會，不算職場性騷擾（性工法），但仍可依性騷擾防治法申訴。",
-          },
         },
       },
 
@@ -163,6 +159,7 @@ export const COURSES: Course[] = [
         id: "stage-types",
         title: "性騷擾定義與態樣",
         description: "分辨敵意式、交換式、權勢性騷擾三種樣態，看懂真實案例。",
+        requiredLevel: 2,
         mobs: [
           {
             id: "mob-hostile",
@@ -297,17 +294,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "態樣辨識卡",
           icon: "🎭",
-          question: {
-            q: "主管以晉升機會要求下屬與其交往，同時又常對其他部屬開黃腔、要求評論身材，這樣的行為可能構成？",
-            options: [
-              "交換式與敵意式性騷擾可能同時成立",
-              "只能算一種樣態，不能同時成立",
-              "都不構成性騷擾",
-            ],
-            answer: 0,
-            moveName: "終極斬・態樣疊加",
-            explain: "同一行為人的不同行為，可能同時構成不同樣態的性騷擾，樣態並非互斥，應個別事實個別認定。",
-          },
         },
       },
 
@@ -318,6 +304,7 @@ export const COURSES: Course[] = [
         id: "stage-response",
         title: "防治措施與應對",
         description: "遇到、看到性騷擾該怎麼辦？也學會避免自己不小心騷擾他人。",
+        requiredLevel: 3,
         mobs: [
           {
             id: "mob-self-protect",
@@ -459,17 +446,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "應對之心卡",
           icon: "🛡️",
-          question: {
-            q: "乙同事被拒絕告白後，仍持續在上班時間送早餐送花，下班後又告白騷擾，甲同事可以怎麼做？",
-            options: [
-              "同時提出職場性騷擾申訴，並可向警察聲請跟騷法告誡書，兩者可併行",
-              "只能擇一申訴",
-              "只能忍耐，不能怎麼樣",
-            ],
-            answer: 0,
-            moveName: "終極斬・雙軌併行",
-            explain: "持續違反意願的追求行為，同時該當性工法性騷擾與跟騷法跟蹤騷擾，兩種救濟管道可以併行使用。",
-          },
         },
       },
 
@@ -480,6 +456,7 @@ export const COURSES: Course[] = [
         id: "stage-employer",
         title: "雇主（機關）義務",
         description: "事前預防、事後糾正補救、申訴時限與保密，機關該做什麼？",
+        requiredLevel: 4,
         mobs: [
           {
             id: "mob-prevent",
@@ -628,17 +605,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "雇主之責卡",
           icon: "🏢",
-          question: {
-            q: "32人的公司負責人接獲員工申訴遭同事性騷擾，應該怎麼處理？",
-            options: [
-              "調整工作分配空間避免再接觸、組成女性比例過半的申訴處理單位調查、附理由做出決議",
-              "直接開除被申訴人最快",
-              "叫雙方自己私下談好就結案",
-            ],
-            answer: 0,
-            moveName: "終極斬・雇主之責",
-            explain: "應調整工作安排避免雙方接觸、組成符合性別比例的申訴處理單位調查，並做出附理由的決議。",
-          },
         },
       },
 
@@ -649,6 +615,7 @@ export const COURSES: Course[] = [
         id: "stage-liability",
         title: "法律責任與救濟",
         description: "行為人要負哪些責任？雇主的連帶賠償責任、申訴時效怎麼算？",
+        requiredLevel: 5,
         mobs: [
           {
             id: "mob-liability",
@@ -751,17 +718,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "縱容破除卡",
           icon: "⚔️",
-          question: {
-            q: "機關對性騷擾申訴大事化小、拖延成立調查小組，甚至事後對被害人施壓調職，這樣的處理方式合法嗎？",
-            options: [
-              "不合法，可能構成雇主未盡防治義務並須負賠償責任",
-              "合法，機關有裁量權可以自行決定如何處理",
-              "只要最後有懲處加害人就沒有問題",
-            ],
-            answer: 0,
-            moveName: "終極斬・破除縱容",
-            explain: "雇主／機關知悉性騷擾卻未採取有效糾正補救措施，甚至打壓申訴人，將違反法定防治義務並可能負賠償責任，這正是我們要打倒的「縱容文化」。",
-          },
         },
       },
     ],
@@ -773,9 +729,37 @@ export const COURSES: Course[] = [
         "這是本次研習的最終試煉！你已經在五個章節中學會了五招絕學——\n" +
         "法規判斷、態樣辨識、應對之心、雇主之責、縱容破除。\n\n" +
         "就像教材中的真實案例一樣，機關「大事化小、官官相護」的姑息\n" +
-        "文化，才是真正縱容性騷擾持續發生的最終魔王。把你收集到的\n" +
-        "招式卡一張一張打出來，看能不能徹底打倒牠！",
+        "文化，才是真正縱容性騷擾持續發生的最終魔王。牠會不斷拋出情境\n" +
+        "問題，你要從手上的招式卡選出對的那一張來回應，正面擊倒牠！",
+      questions: [
+        {
+          q: "下班後同事私下聚餐，乙同事擁抱甲同事久久不放並送飛吻，甲同事感到不舒服，這可以申訴嗎？",
+          correctStageId: "stage-law",
+          explain: "下班後私下聚會非職務上的強制聚會，不算職場性騷擾（性工法），但仍可依性騷擾防治法申訴。這題該用「法規判斷卡」。",
+        },
+        {
+          q: "主管以晉升機會要求下屬與其交往，同時又常對其他部屬開黃腔、要求評論身材，這樣的行為可能構成？",
+          correctStageId: "stage-types",
+          explain: "同一行為人的不同行為，可能同時構成不同樣態的性騷擾，樣態並非互斥，應個別事實個別認定。這題該用「態樣辨識卡」。",
+        },
+        {
+          q: "乙同事被拒絕告白後，仍持續在上班時間送早餐送花，下班後又告白騷擾，甲同事可以怎麼做？",
+          correctStageId: "stage-response",
+          explain: "持續違反意願的追求行為，同時該當性工法性騷擾與跟騷法跟蹤騷擾，兩種救濟管道可以併行使用。這題該用「應對之心卡」。",
+        },
+        {
+          q: "32人的公司負責人接獲員工申訴遭同事性騷擾，應該怎麼處理？",
+          correctStageId: "stage-employer",
+          explain: "應調整工作安排避免雙方接觸、組成符合性別比例的申訴處理單位調查，並做出附理由的決議。這題該用「雇主之責卡」。",
+        },
+        {
+          q: "機關對性騷擾申訴大事化小、拖延成立調查小組，甚至事後對被害人施壓調職，這樣的處理方式合法嗎？",
+          correctStageId: "stage-liability",
+          explain: "雇主／機關知悉性騷擾卻未採取有效糾正補救措施，甚至打壓申訴人，將違反法定防治義務並可能負賠償責任。這題該用「縱容破除卡」。",
+        },
+      ],
     },
+    restStopVideoId: "3Y-SI2GgEYc",
   },
 
   // ==========================================================
@@ -796,6 +780,7 @@ export const COURSES: Course[] = [
         id: "stage-definition",
         title: "定義與立法背景",
         description: "為什麼要修法？職安法所稱的職場霸凌，到底怎麼認定？",
+        requiredLevel: 1,
         mobs: [
           {
             id: "mob-purpose",
@@ -910,13 +895,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "定義透視卡",
           icon: "🔍",
-          question: {
-            q: "職場霸凌的法定定義中，行為人與被霸凌者之間必須具備什麼關係？",
-            options: ["事業單位人員利用職務或權勢等關係", "沒有任何關係限制，任何人都算", "只有直屬主管才符合定義"],
-            answer: 0,
-            moveName: "終極斬・定義透視",
-            explain: "職場霸凌定義明文要求行為人是「利用職務或權勢等關係」的事業單位人員。",
-          },
         },
       },
 
@@ -927,6 +905,7 @@ export const COURSES: Course[] = [
         id: "stage-employer-duty",
         title: "雇主防治責任",
         description: "依公司規模不同，雇主的法定義務有什麼差別？防治規範要寫些什麼？",
+        requiredLevel: 2,
         mobs: [
           {
             id: "mob-scale",
@@ -1049,13 +1028,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "雇主之責卡",
           icon: "🏢",
-          question: {
-            q: "僱用勞工30人以上的雇主，除了申訴管道，還必須做什麼？",
-            options: ["訂定防治措施、申訴及懲處規範，並設申訴處理單位", "什麼都不用多做", "只要每年開一次尾牙就好"],
-            answer: 0,
-            moveName: "終極斬・雇主之責",
-            explain: "30人以上雇主應訂定完整的防治措施、申訴及懲處規範，並設置申訴處理單位負責相關事務。",
-          },
         },
       },
 
@@ -1066,6 +1038,7 @@ export const COURSES: Course[] = [
         id: "stage-complaint-process",
         title: "內部申訴與調查程序",
         description: "知悉就要處理、申訴怎麼提、調查要多久，一次搞懂完整流程。",
+        requiredLevel: 3,
         mobs: [
           {
             id: "mob-immediate-response",
@@ -1207,17 +1180,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "即刻應對卡",
           icon: "⏱️",
-          question: {
-            q: "雇主非因正式申訴而知悉職場霸凌情形，且勞工暫無申訴意願，雇主可以完全不處理嗎？",
-            options: [
-              "不可以，仍應訪談釐清事實並依意願提供必要協助",
-              "可以，沒有正式申訴就不用管",
-              "只要記錄下來備查即可，不用實際行動",
-            ],
-            answer: 0,
-            moveName: "終極斬・即刻應對",
-            explain: "「知悉」就要處理，不論是否收到正式申訴，雇主都應主動釐清事實、告知救濟途徑並提供必要協助。",
-          },
         },
       },
 
@@ -1228,6 +1190,7 @@ export const COURSES: Course[] = [
         id: "stage-discipline-appeal",
         title: "懲處、保護與申復救濟",
         description: "調查屬實後怎麼懲處？申訴人怎麼被保護？不服決定還能怎麼救濟？",
+        requiredLevel: 4,
         mobs: [
           {
             id: "mob-severity",
@@ -1359,13 +1322,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "保護傘卡",
           icon: "🛡️",
-          question: {
-            q: "雇主對職場霸凌申訴人做出降調、減薪等不利處分，會有什麼後果？",
-            options: ["違法，且可能被處以1-100萬元罰鍰", "完全合法，這是雇主的管理權", "只要有正當理由就不算違法"],
-            answer: 0,
-            moveName: "終極斬・保護傘",
-            explain: "雇主不得對申訴人為不利處分，違反者除處分無效外，還可能被主管機關處以1-100萬元罰鍰。",
-          },
         },
       },
 
@@ -1376,6 +1332,7 @@ export const COURSES: Course[] = [
         id: "stage-penalty",
         title: "罰則與外部救濟",
         description: "雇主沒做到會被罰多少？調查有重大瑕疵時，還有什麼外部救濟機制？",
+        requiredLevel: 5,
         mobs: [
           {
             id: "mob-fine",
@@ -1495,13 +1452,6 @@ export const COURSES: Course[] = [
         card: {
           moveName: "外部救濟卡",
           icon: "🏛️",
-          question: {
-            q: "被申訴人是機關（構）最高負責人時，勞工可以怎麼提起申訴？",
-            options: ["逕向直轄市或縣（市）主管機關提起申訴", "完全沒有申訴管道", "只能等最高負責人自己離職"],
-            answer: 0,
-            moveName: "終極斬・外部救濟",
-            explain: "被申訴人是最高負責人時，法律開放勞工逕向地方主管機關提起申訴，不受限於內部申訴管道，避免「自己人查自己人」的困境。",
-          },
         },
       },
     ],
@@ -1513,9 +1463,37 @@ export const COURSES: Course[] = [
         "這是本次研習的最終試煉！你已經在五個章節中學會了五招絕學——\n" +
         "定義透視、雇主之責、即刻應對、保護傘、外部救濟。\n\n" +
         "「冷落」與「孤立」正是職場霸凌準則明文列舉的典型手段——把人\n" +
-        "排除在群體之外、讓人求助無門。把你收集到的招式卡一張一張打\n" +
-        "出來，看能不能徹底打倒這隻魔王！",
+        "排除在群體之外、讓人求助無門。牠會不斷拋出情境問題，你要從\n" +
+        "手上的招式卡選出對的那一張來回應，正面擊倒這隻魔王！",
+      questions: [
+        {
+          q: "職場霸凌的法定定義中，行為人與被霸凌者之間必須具備什麼關係？",
+          correctStageId: "stage-definition",
+          explain: "職場霸凌定義明文要求行為人是「利用職務或權勢等關係」的事業單位人員。這題該用「定義透視卡」。",
+        },
+        {
+          q: "僱用勞工30人以上的雇主，除了申訴管道，還必須做什麼？",
+          correctStageId: "stage-employer-duty",
+          explain: "30人以上雇主應訂定完整的防治措施、申訴及懲處規範，並設置申訴處理單位負責相關事務。這題該用「雇主之責卡」。",
+        },
+        {
+          q: "雇主非因正式申訴而知悉職場霸凌情形，且勞工暫無申訴意願，雇主可以完全不處理嗎？",
+          correctStageId: "stage-complaint-process",
+          explain: "「知悉」就要處理，不論是否收到正式申訴，雇主都應主動釐清事實、告知救濟途徑並提供必要協助。這題該用「即刻應對卡」。",
+        },
+        {
+          q: "雇主對職場霸凌申訴人做出降調、減薪等不利處分，會有什麼後果？",
+          correctStageId: "stage-discipline-appeal",
+          explain: "雇主不得對申訴人為不利處分，違反者除處分無效外，還可能被主管機關處以1-100萬元罰鍰。這題該用「保護傘卡」。",
+        },
+        {
+          q: "被申訴人是機關（構）最高負責人時，勞工可以怎麼提起申訴？",
+          correctStageId: "stage-penalty",
+          explain: "被申訴人是最高負責人時，法律開放勞工逕向地方主管機關提起申訴，不受限於內部申訴管道。這題該用「外部救濟卡」。",
+        },
+      ],
     },
+    restStopVideoId: "8Q6ojSV1ZbI",
   },
 ];
 
@@ -1575,32 +1553,53 @@ export function summarizeCourseProgress(course: Course, cp: CourseProgress) {
 }
 
 /**
- * 闖關過程用：把整個課程所有 Stage 的小怪、小魔王攤平成一條時間軸，
- * 算出目前是第幾關、總共幾關，讓玩家隨時知道整體進度、還剩多少關。
- * （最終大魔王是獨立的卡牌戰，不計入這條時間軸。）
+ * 闖關過程用：算出「這個 Stage 自己」目前是第幾關、這個 Stage 總共幾關
+ * （小怪數 + 1 隻小魔王）。進度條只反映當前 Stage，不跟其他 Stage 混在一起。
  */
-export function getOverallProgress(course: Course, cp: CourseProgress) {
-  let total = 0;
-  let completed = 0;
-
-  for (const stage of course.stages) {
-    const sp = getStageProgress(cp, stage);
-    total += stage.mobs.length + 1; // +1 是這個 Stage 的小魔王
-    completed += sp.mobsCleared.length + (sp.miniBossCleared ? 1 : 0);
-  }
-
-  return { completed, total };
+export function getStagePosition(stage: Stage, sp: StageProgress) {
+  const total = stage.mobs.length + 1; // +1 是這個 Stage 的小魔王
+  const completed = sp.mobsCleared.length + (sp.miniBossCleared ? 1 : 0);
+  const current = Math.min(total, completed + 1);
+  return { current, total };
 }
 
-/** 目前正在挑戰的關卡在整體時間軸上的第幾關（1-indexed），以及所屬 Stage 的階段序號 */
+/** 目前正在挑戰的關卡：所屬 Stage 自己的第幾關／總共幾關，以及階段序號標籤 */
 export function getEncounterPosition(course: Course, cp: CourseProgress, encounter: EncounterRef) {
-  const { completed, total } = getOverallProgress(course, cp);
-  const current = Math.min(total, completed + 1);
   const stageIndex = course.stages.findIndex((s) => s.id === encounter.stageId);
+  const stage = course.stages[stageIndex];
+  const sp = getStageProgress(cp, stage);
+  const { current, total } = getStagePosition(stage, sp);
 
   return {
     current,
     total,
-    stageLabel: `階段 ${stageIndex + 1}/${course.stages.length}：${course.stages[stageIndex]?.title ?? ""}`,
+    stageLabel: `階段 ${stageIndex + 1}/${course.stages.length}：${stage.title}`,
   };
+}
+
+/** 跨所有課程，玩家總共拿到幾個徽章（每個 Stage 的小魔王算一個） */
+export function getTotalBadges(progress: Progress): number {
+  let total = 0;
+  for (const course of COURSES) {
+    const cp = progress[course.id] ?? { stages: {}, finalBossCleared: false };
+    for (const stage of course.stages) {
+      if (getStageProgress(cp, stage).miniBossCleared) total += 1;
+    }
+  }
+  return total;
+}
+
+/** 角色等級：兩門課程共用，每拿一個徽章升一級，從 Lv.1 開始 */
+export function getPlayerLevel(progress: Progress): number {
+  return getTotalBadges(progress) + 1;
+}
+
+/** 這個 Stage 的等級門檻是否已經達到 */
+export function isStageUnlocked(stage: Stage, level: number): boolean {
+  return level >= stage.requiredLevel;
+}
+
+/** 跨所有課程總共有幾枚徽章可以拿（主畫面顯示「x/幾」用） */
+export function getMaxBadges(): number {
+  return COURSES.reduce((sum, c) => sum + c.stages.length, 0);
 }

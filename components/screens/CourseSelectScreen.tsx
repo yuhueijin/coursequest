@@ -1,16 +1,18 @@
 import { COURSES, findCourse, summarizeCourseProgress } from "@/lib/courses";
 import { getCourseProgress, isCourseUnlocked } from "@/lib/progress";
 import type { Progress } from "@/lib/types";
+import HomeButton from "@/components/HomeButton";
 
 interface CourseSelectScreenProps {
   progress: Progress;
   onSelectCourse: (courseId: string) => void;
-  onBack: () => void;
+  onGoHome: () => void;
 }
 
-export default function CourseSelectScreen({ progress, onSelectCourse, onBack }: CourseSelectScreenProps) {
+export default function CourseSelectScreen({ progress, onSelectCourse, onGoHome }: CourseSelectScreenProps) {
   return (
     <div className="screen">
+      <HomeButton onClick={onGoHome} />
       <h2>選擇課程關卡</h2>
 
       <div className="course-list">
@@ -44,9 +46,6 @@ export default function CourseSelectScreen({ progress, onSelectCourse, onBack }:
           );
         })}
       </div>
-      <button className="btn btn-ghost" onClick={onBack}>
-        ← 回主畫面
-      </button>
     </div>
   );
 }

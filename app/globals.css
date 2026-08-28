@@ -81,6 +81,34 @@ h2 {
   font-weight: 600;
 }
 
+/* -------- 回主畫面按鈕（每個關卡都有）-------- */
+.home-btn {
+  align-self: flex-start;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
+/* -------- 主畫面的等級／徽章摘要 -------- */
+.player-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 20px;
+}
+
+.player-summary-level {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.player-summary-badges {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
 /* -------- 闖關進度條（教學／Boss介紹／戰鬥／結算畫面共用）-------- */
 .adventure-progress {
   background: var(--bg-card);
@@ -425,6 +453,25 @@ h2 {
   background: #14361f;
 }
 
+.stage-tile.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stage-tile.locked:hover {
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+
+.stage-tile.rest-tile {
+  border-color: var(--warn);
+}
+
+.stage-tile.rest-tile .stage-badge {
+  border-color: var(--warn);
+  background: #3a2f0f;
+}
+
 .stage-tile-body {
   display: flex;
   flex-direction: column;
@@ -516,24 +563,27 @@ h2 {
   text-align: center;
 }
 
-.move-card.played {
-  opacity: 0.45;
-  cursor: not-allowed;
+/* -------- 休息處 -------- */
+.lesson-card.rest-card {
+  border-color: var(--warn);
+  max-width: 560px;
 }
 
-.move-card.played.correct {
-  border-color: var(--success);
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
 }
 
-.move-card.played.wrong {
-  border-color: var(--danger);
-}
-
-.move-card-mark {
+.video-wrapper iframe {
   position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 0.9rem;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 @media (max-width: 480px) {

@@ -4,11 +4,14 @@
 
 🎮 **線上直接玩：https://yuhueijin.github.io/coursequest/**
 
-- **課程** = 一個大主題，底下分好幾個 **Stage（章節／小關卡）**，可以任意順序挑戰
+- **課程** = 一個大主題，底下分好幾個 **Stage（章節／小關卡）**
+- **角色等級** = 兩門課程共用，每拿一個徽章升一級，等級決定哪些章節解鎖；
+  等級足夠的章節之間可以任意順序挑戰
 - **小怪** = 學習小節（先教一段觀念，再用問答當攻擊）
 - **小魔王** = 每個 Stage 結尾的綜合考驗，打贏拿到這個章節的**徽章／招式卡**
-- **大魔王** = 全部 Stage 都拿到徽章後才解鎖的最終試煉，用收集到的招式卡**卡牌戰**——
-  自由選一張卡出招，答對造成傷害、答錯被反擊，直到牌用完或分出勝負
+- **大魔王** = 全部 Stage 都拿到徽章後才解鎖的最終試煉：牠依序出題，玩家要從
+  收集到的招式卡手牌中選一張回答，答對造成傷害、答錯被反擊
+- **休息處** = 每門課程都有，血量歸零時可以進去看部相關影片，回血到滿再出發
 
 目前內建兩門課程：
 1. 「機關性騷擾防治研習」改編自行政院性別平等處《各機關性騷擾防治通用教材》，
@@ -53,16 +56,19 @@ app/                  Next.js 路由（layout、page、全域樣式）
 components/
   Game.tsx            遊戲引擎：畫面狀態機、戰鬥邏輯、存檔
   HpBar.tsx            血條元件
-  AdventureProgressBar.tsx  闖關過程的整體進度條
+  HomeButton.tsx       每個關卡都有的「回主畫面」按鈕
+  AdventureProgressBar.tsx  單一 Stage 自己的闖關進度條
   screens/
     CourseSelectScreen.tsx  選課程（顯示徽章彙總）
-    StageSelectScreen.tsx   選章節（自由挑選、大魔王解鎖判斷）
+    StageSelectScreen.tsx   選章節（等級解鎖、休息處、大魔王入口）
     LessonScreen / BossIntroScreen / BattleScreen / EncounterResultScreen
-    CardBossScreen.tsx      大魔王卡牌戰
+    CardBossScreen.tsx      大魔王卡牌戰（魔王出題，手牌選卡作答）
+    RestScreen.tsx          休息處（YouTube 影片、回血到滿）
     CourseClearScreen.tsx
 lib/
   types.ts            課程／Stage／招式卡／存檔的型別定義
-  courses.ts          課程內容資料（★ 加新課程只改這個檔案）＋關卡推進邏輯
+  courses.ts          課程內容資料（★ 加新課程只改這個檔案）＋關卡推進、
+                       等級解鎖、徽章統計等邏輯
   progress.ts         localStorage 存讀檔工具
 vanilla-prototype/    最初的純 HTML/CSS/JS 原型（保留參考，未串接）
 ```
@@ -70,6 +76,8 @@ vanilla-prototype/    最初的純 HTML/CSS/JS 原型（保留參考，未串接
 ## 加新課程
 
 只要在 `lib/courses.ts` 的 `COURSES` 陣列新增一個物件即可：一個 Course 底下有多個
-`Stage`（可任意順序挑戰），每個 Stage 有 `mobs[]` + `miniBoss` + `card`（打贏小魔王
-拿到的招式卡，也是最終大魔王卡牌戰要用的那張卡），課程結尾再加一個沒有題目、只有
-基本資料的 `finalBoss`。型別見 `lib/types.ts`，不用碰 `components/` 底下的任何程式碼。
+`Stage`（各自有 `requiredLevel` 決定幾級解鎖），每個 Stage 有 `mobs[]` + `miniBoss` +
+`card`（打贏小魔王拿到的招式卡／徽章，只有 `moveName` 和 `icon`），課程結尾再加一個
+`finalBoss`，其 `questions[]` 每題用 `correctStageId` 指定哪張招式卡是正解、數量要跟
+Stage 數一致（一張卡對一題）。另外要補一個 `restStopVideoId`（YouTube 影片 ID）。
+型別見 `lib/types.ts`，不用碰 `components/` 底下的任何程式碼。

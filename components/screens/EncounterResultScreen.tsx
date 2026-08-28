@@ -1,9 +1,13 @@
+import HomeButton from "@/components/HomeButton";
+
 interface EncounterResultScreenProps {
   outcome: "win" | "lose";
   enemyName: string;
   onAfterWin: () => void;
   onRetry: () => void;
+  onGoRest: () => void;
   onBack: () => void;
+  onGoHome: () => void;
 }
 
 export default function EncounterResultScreen({
@@ -11,11 +15,14 @@ export default function EncounterResultScreen({
   enemyName,
   onAfterWin,
   onRetry,
+  onGoRest,
   onBack,
+  onGoHome,
 }: EncounterResultScreenProps) {
   if (outcome === "win") {
     return (
       <div className="screen center">
+        <HomeButton onClick={onGoHome} />
         <div className="result-card win">
           <h2>🎉 擊敗了 {enemyName}！</h2>
           <p>知識轉化成了力量。</p>
@@ -29,11 +36,15 @@ export default function EncounterResultScreen({
 
   return (
     <div className="screen center">
+      <HomeButton onClick={onGoHome} />
       <div className="result-card lose">
-        <h2>💀 你被 {enemyName} 擊倒了</h2>
-        <p>再複習一下剛剛的觀念，重新挑戰吧！</p>
+        <h2>😅 這次沒有打贏 {enemyName}</h2>
+        <p>別灰心，複習一下剛剛的觀念，下次再來挑戰！</p>
         <button className="btn btn-danger" onClick={onRetry}>
           再挑戰一次
+        </button>
+        <button className="btn btn-warn" onClick={onGoRest}>
+          🏕️ 前往休息處回血
         </button>
         <button className="btn btn-ghost" onClick={onBack}>
           回選擇章節

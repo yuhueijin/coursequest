@@ -1,13 +1,16 @@
 import type { Mob } from "@/lib/types";
+import HomeButton from "@/components/HomeButton";
 
 interface LessonScreenProps {
   mob: Mob;
   onBeginBattle: () => void;
+  onGoHome: () => void;
 }
 
-export default function LessonScreen({ mob, onBeginBattle }: LessonScreenProps) {
+export default function LessonScreen({ mob, onBeginBattle, onGoHome }: LessonScreenProps) {
   return (
     <div className="screen center">
+      <HomeButton onClick={onGoHome} />
       <div className="lesson-card">
         <p className="eyebrow">遭遇小怪：{mob.name}</p>
         <h2>{mob.lesson.title}</h2>

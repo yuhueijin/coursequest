@@ -38,14 +38,20 @@ export interface Boss {
   questions: Question[];
 }
 
-/** 打贏一個 Stage 的小魔王後獲得的「招式卡」，用在最終大魔王的卡牌戰中 */
+/** 打贏一個 Stage 的小魔王後獲得的「招式卡」，同時也是徽章圖示 */
 export interface StageCard {
   /** 卡面顯示的招式名稱 */
   moveName: string;
-  /** 卡面圖示（emoji） */
+  /** 卡面圖示（emoji），同時當作章節選單的徽章圖示 */
   icon: string;
-  /** 打出這張卡時要回答的題目（最終試煉等級的綜合題） */
-  question: Question;
+}
+
+/** 大魔王的其中一題：他出題，玩家要從手牌中選出對應這題的招式卡作答 */
+export interface FinalBossQuestion {
+  q: string;
+  /** 哪個 Stage 的招式卡才是這題的正解 */
+  correctStageId: string;
+  explain: string;
 }
 
 /** 一個主題章節：先打幾隻小怪（學習小節），再打這個主題的小魔王（綜合考驗） */
@@ -53,17 +59,23 @@ export interface Stage {
   id: string;
   title: string;
   description: string;
+  /** 需要達到這個角色等級才能挑戰此章節 */
+  requiredLevel: number;
   mobs: Mob[];
   miniBoss: Boss;
   /** 通關這個 Stage 後獲得的徽章／招式卡 */
   card: StageCard;
 }
 
-/** 最終大魔王：只有基本資料，題目來自玩家收集到的招式卡（course.stages[].card） */
+/**
+ * 最終大魔王：他會依序出題，玩家要從收集到的招式卡（course.stages[].card）
+ * 手牌中選一張回答；questions 的數量應與 stages 數量一致，一張卡對一題。
+ */
 export interface FinalBoss {
   name: string;
   hp: number;
   intro: string;
+  questions: FinalBossQuestion[];
 }
 
 /** BossIntroScreen 共用的最小資料形狀，小魔王與大魔王都符合 */
@@ -81,6 +93,8 @@ export interface Course {
   stages: Stage[];
   /** 全部 Stage 都過關後才能挑戰的最終大魔王 */
   finalBoss: FinalBoss;
+  /** 休息處播放的 YouTube 影片 ID（網址 watch?v= 後面那段） */
+  restStopVideoId: string;
 }
 
 export type EncounterKind = "mob" | "miniboss";

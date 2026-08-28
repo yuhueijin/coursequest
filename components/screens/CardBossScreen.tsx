@@ -1,20 +1,22 @@
 import HpBar from "@/components/HpBar";
-import type { Stage } from "@/lib/types";
+import HomeButton from "@/components/HomeButton";
+import type { FinalBossQuestion, Stage } from "@/lib/types";
 
 interface CardBossScreenProps {
   bossName: string;
   stages: Stage[];
   player: { hp: number; maxHp: number };
   enemy: { hp: number; maxHp: number };
-  playedStageIds: string[];
-  cardOutcomes: Record<string, "correct" | "wrong">;
-  activeStageId: string | null;
+  currentQuestion: FinalBossQuestion;
+  questionNumber: number;
+  totalQuestions: number;
+  remainingStageIds: string[];
   lastResult: "correct" | "wrong" | null;
   lastLog: string;
   lastExplain: string;
-  onPlayCard: (stageId: string) => void;
-  onAnswer: (optionIndex: number) => void;
+  onSelectCard: (stageId: string) => void;
   onProceed: () => void;
+  onGoHome: () => void;
 }
 
 export default function CardBossScreen({
@@ -22,20 +24,22 @@ export default function CardBossScreen({
   stages,
   player,
   enemy,
-  playedStageIds,
-  cardOutcomes,
-  activeStageId,
+  currentQuestion,
+  questionNumber,
+  totalQuestions,
+  remainingStageIds,
   lastResult,
   lastLog,
   lastExplain,
-  onPlayCard,
-  onAnswer,
+  onSelectCard,
   onProceed,
+  onGoHome,
 }: CardBossScreenProps) {
-  const activeStage = activeStageId ? stages.find((s) => s.id === activeStageId) : null;
+  const remainingStages = stages.filter((s) => remainingStageIds.includes(s.id));
 
   return (
     <div className="screen">
+      <HomeButton onClick={onGoHome} />
       <div className="battle-header">
         <div className="combatant">
           <p className="name">🧑 你</p>
@@ -48,55 +52,38 @@ export default function CardBossScreen({
         </div>
       </div>
 
-      {activeStage ? (
-        <>
-          <div className="question-card">
-            <p className="eyebrow">
-              {activeStage.card.icon} {activeStage.card.moveName}
-            </p>
-            <h3>{activeStage.card.question.q}</h3>
-            {!lastResult && (
-              <div className="options">
-                {activeStage.card.question.options.map((opt, i) => (
-                  <button key={i} className="btn btn-option" onClick={() => onAnswer(i)}>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="question-card">
+        <p className="eyebrow">
+          魔王出題　第 {questionNumber} / {totalQuestions} 題
+        </p>
+        <h3>{currentQuestion.q}</h3>
 
-          {lastResult && (
-            <div className={`result-banner ${lastResult}`}>
-              <p>{lastLog}</p>
-              <p className="explain">💡 {lastExplain}</p>
-              <button className="btn btn-primary" onClick={onProceed}>
-                繼續
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="card-hand">
-          <p className="eyebrow">選一張招式卡出招</p>
-          <div className="card-hand-grid">
-            {stages.map((stage) => {
-              const played = playedStageIds.includes(stage.id);
-              const outcome = cardOutcomes[stage.id];
-              return (
+        {!lastResult && (
+          <div className="card-hand">
+            <p className="eyebrow">從手牌選一張回答</p>
+            <div className="card-hand-grid">
+              {remainingStages.map((stage) => (
                 <button
                   key={stage.id}
-                  className={`move-card ${played ? `played ${outcome}` : ""}`}
-                  onClick={() => !played && onPlayCard(stage.id)}
-                  disabled={played}
+                  className="move-card"
+                  onClick={() => onSelectCard(stage.id)}
                 >
                   <span className="move-card-icon">{stage.card.icon}</span>
                   <span className="move-card-name">{stage.card.moveName}</span>
-                  {played && <span className="move-card-mark">{outcome === "correct" ? "✅" : "❌"}</span>}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
+        )}
+      </div>
+
+      {lastResult && (
+        <div className={`result-banner ${lastResult}`}>
+          <p>{lastLog}</p>
+          <p className="explain">💡 {lastExplain}</p>
+          <button className="btn btn-primary" onClick={onProceed}>
+            繼續
+          </button>
         </div>
       )}
     </div>
