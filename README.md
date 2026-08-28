@@ -51,15 +51,20 @@ npm run dev
 
 ## 部署
 
-這個專案是純前端（沒有伺服器功能），用 `output: "export"` 打包成靜態檔案，
-透過 [.github/workflows/deploy.yml](.github/workflows/deploy.yml) 在每次 push 到
-`main` 時自動建置並部署到 **GitHub Pages**。
+這個專案是純前端（沒有伺服器功能），用 `output: "export"` 打包成靜態檔案。
 
-本機也可以自己模擬打包＋預覽：
+- **GitHub**：透過 [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+  在每次 push 到 `main` 時自動建置並部署到 **GitHub Pages**。
+- **GitLab**：透過 [.gitlab-ci.yml](.gitlab-ci.yml) 部署到 **GitLab Pages**，
+  兩邊設定互相獨立、可以同時維持。詳細前置需求、網址規則、除錯方式見
+  [GITLAB_DEPLOY.md](GITLAB_DEPLOY.md)。
+
+子路徑（`basePath`）由 `BASE_PATH` 環境變數帶入，本機開發不用設定，
+路徑維持根目錄；本機也可以自己模擬打包＋預覽：
 
 ```bash
-GITHUB_PAGES=true npm run build   # 輸出到 out/，路徑會加上 /coursequest 前綴
-npm run start                     # 用 serve 在本機預覽 out/ 的結果
+BASE_PATH=/coursequest npm run build   # 輸出到 out/，路徑會加上 /coursequest 前綴
+npm run start                          # 用 serve 在本機預覽 out/ 的結果
 ```
 
 ## 專案結構

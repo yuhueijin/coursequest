@@ -1,0 +1,29 @@
+# 部署到 GitLab Pages。完整說明（含前置需求、URL 規則、除錯方式）見
+# GITLAB_DEPLOY.md，這裡只放實際會執行的流程。
+#
+# 前置需求：這個 GitLab 執行個體要已經啟用 Pages 功能（由 GitLab 管理員
+# 設定，不是專案層級能自己打開的東西）。沒啟用的話這個 job 還是會跑完、
+# artifact 也會產生，但不會有對外可以打開的網址，詳見 GITLAB_DEPLOY.md。
+
+image: node:20
+
+pages:
+  stage: deploy
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm
+  script:
+    - npm ci --cache .npm --prefer-offline
+    # GitLab Pages 專案頁面的網址是 https://<群組>.<Pages 網域>/<專案名稱>/，
+    # 用 CI_PROJECT_NAME 動態帶入子路徑，不用因為專案改名而手動改設定。
+    - export BASE_PATH="/${CI_PROJECT_NAME}"
+    - npm run build
+    # GitLab Pages 規定發佈用的靜態檔案要放在 public/ 目錄下。
+    - rm -rf public
+    - mv out public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
