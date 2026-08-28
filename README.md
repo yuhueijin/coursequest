@@ -2,6 +2,8 @@
 
 把課程變成關卡、把知識變成招式的文字冒險學習遊戲。
 
+🎮 **線上直接玩：https://yuhueijin.github.io/coursequest/**
+
 - **課程** = 大魔王關卡
 - **小怪** = 學習小節（先教一段觀念，再用問答當攻擊）
 - **大魔王戰** = 綜合測驗，答對造成傷害、答錯被反擊
@@ -22,6 +24,19 @@ npm run dev
 如果你用 [nvm](https://github.com/nvm-sh/nvm) 管理 Node 版本，也可以直接跑 `./scripts/dev.sh`，會自動切到 `.nvmrc` 指定的版本再啟動。
 
 打開 http://localhost:3000
+
+## 部署
+
+這個專案是純前端（沒有伺服器功能），用 `output: "export"` 打包成靜態檔案，
+透過 [.github/workflows/deploy.yml](.github/workflows/deploy.yml) 在每次 push 到
+`main` 時自動建置並部署到 **GitHub Pages**。
+
+本機也可以自己模擬打包＋預覽：
+
+```bash
+GITHUB_PAGES=true npm run build   # 輸出到 out/，路徑會加上 /coursequest 前綴
+npm run start                     # 用 serve 在本機預覽 out/ 的結果
+```
 
 ## 專案結構
 
